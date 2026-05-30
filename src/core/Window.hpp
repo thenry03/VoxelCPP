@@ -1,0 +1,47 @@
+#pragma once
+
+#include <string>
+
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+class Window
+{
+public:
+    // --- Lifecycle ---
+    Window(int width, int height, const std::string &title);
+    ~Window();
+
+    // --- RAII ---
+    Window(const Window &)            = delete;
+    Window &operator=(const Window &) = delete;
+
+    // --- State queries ---
+    bool shouldClose() const;
+    int  getWidth()    const;
+    int  getHeight()   const;
+
+    // --- Native pointer access ---
+    GLFWwindow *getNativeWindow() const;
+
+    // --- Options ---
+    void setVSync(bool enabled) const;
+
+    // --- Game loop operations ---
+    void swapBuffers()         const;
+    void pollEvents()          const;
+    void clear(float r = 0.0f,
+               float g = 0.0f,
+               float b = 0.0f,
+               float a = 1.0f) const;
+
+private:
+    // --- Private methods ---
+    static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+    void onResize(int width, int height);
+
+    // --- Private attributes ---
+    GLFWwindow *m_window = nullptr;
+    int         m_width  = 0;
+    int         m_height = 0;
+};
