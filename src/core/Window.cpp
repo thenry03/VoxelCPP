@@ -127,6 +127,9 @@ void Window::clear(float r,
 // ==========================================
 void Window::framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
+    // Bridge the gap between GLFW C-style event system and object oriented Window class
+    // This line retrieves the C++ Window instance from the GLFW window handle
+    // This way the static callback can execute methods on the actual object
     Window *instance = static_cast<Window *>(glfwGetWindowUserPointer(window));
 
     if (instance)

@@ -29,6 +29,8 @@ target_link_libraries(VoxelCPP PRIVATE
     glm::glm
 )
 
+target_compile_options(VoxelCPP PRIVATE -Wall -Wextra -Wpedantic)
+
 set_target_properties(VoxelCPP PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
 )

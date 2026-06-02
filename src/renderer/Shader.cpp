@@ -70,26 +70,6 @@ static void linkCheck(GLuint shader, GLuint vertexShader, GLuint fragmentShader)
     }
 }
 
-GLint Shader::getUniformLocation(const std::string &name) const
-{
-    // If uniform already in cache, return it
-    if (m_uniformLocationCache.find(name) != m_uniformLocationCache.end())
-        return m_uniformLocationCache[name];
-
-    // Ask GPU using .c_str() so it compiles with no errors
-    GLint location = glGetUniformLocation(m_programID, name.c_str());
-
-    if (location == -1)
-    {
-        std::cerr << "Warning: uniform '" << name << "' not found.\n";
-        return -1;
-    }
-
-    // Store in cache for next frame
-    m_uniformLocationCache[name] = location;
-    return location;
-}
-
 // ==========================================
 // 1. LIFECYCLE
 // ==========================================
@@ -163,7 +143,7 @@ void Shader::unbind() const
 
 void Shader::setInt(const std::string &name, int value) const
 {
-    int location = getUniformLocation(name);
+    GLint location = getUniformLocation(name);
     if (location == -1)
         return;
 
@@ -173,7 +153,7 @@ void Shader::setInt(const std::string &name, int value) const
 
 void Shader::setFloat(const std::string &name, float value) const
 {
-    int location = getUniformLocation(name);
+    GLint location = getUniformLocation(name);
     if (location == -1)
         return;
 
@@ -183,7 +163,7 @@ void Shader::setFloat(const std::string &name, float value) const
 
 void Shader::setVec3(const std::string &name, const glm::vec3 &value) const
 {
-    int location = getUniformLocation(name);
+    GLint location = getUniformLocation(name);
     if (location == -1)
         return;
 
@@ -193,7 +173,7 @@ void Shader::setVec3(const std::string &name, const glm::vec3 &value) const
 
 void Shader::setVec4(const std::string &name, const glm::vec4 &value) const
 {
-    int location = getUniformLocation(name);
+    GLint location = getUniformLocation(name);
     if (location == -1)
         return;
 
@@ -203,7 +183,7 @@ void Shader::setVec4(const std::string &name, const glm::vec4 &value) const
 
 void Shader::setMat3(const std::string &name, const glm::mat3 &value) const
 {
-    int location = getUniformLocation(name);
+    GLint location = getUniformLocation(name);
     if (location == -1)
         return;
 
@@ -213,10 +193,34 @@ void Shader::setMat3(const std::string &name, const glm::mat3 &value) const
 
 void Shader::setMat4(const std::string &name, const glm::mat4 &value) const
 {
-    int location = getUniformLocation(name);
+    GLint location = getUniformLocation(name);
     if (location == -1)
         return;
 
     // Send uniform
     glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
+}
+
+// ==========================================
+// 3. PRIVATE METHODS
+// ==========================================
+GLint Shader::getUniformLocation(const std::string &name) const
+{
+    // If uniform already in cache, return it
+    if (m_uniformLocationCache.find(name) != m_uniformLocationCache.end())
+        return m_uniformLocationCache[name];
+
+    // Ask GPU using .c_str() so it compiles with no errors
+    GLint location = glGetUniformLocation(m_programID, name.c_str());
+
+    if (location == -1)
+    {
+        std::cerr << "Warning: uniform '" << name << "' not found.\n";
+        return -1;
+    }
+
+    // Store in cache for next frame
+    m_uniformLocationCache[name] = location;
+    
+    return location;
 }
