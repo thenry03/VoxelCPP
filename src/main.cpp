@@ -7,6 +7,9 @@
 
 #include "core/Window.hpp"
 #include "renderer/Shader.hpp"
+#include "core/Camera.hpp"
+#include "core/Input.hpp"
+#include "core/Timer.hpp"
 
 constexpr int width = 800;
 constexpr int height = 600;
@@ -19,15 +22,14 @@ void defineCube()
     static const float vertices[] = {
         // Front
         -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-         1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-         1.0f, 1.0f,  1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f,  1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+        1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
         // Back
         -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-         1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
-         1.0f, 1.0f,  -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f,  -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f
-    };
+        1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f};
 
     static const unsigned int indexes[] = {
         // Front
@@ -81,16 +83,11 @@ void defineCube()
     glBindVertexArray(0);
 }
 
-void drawCube(const Shader &shader, const Window &window)
+void drawCube(const Shader &shader, const Window &window, const Camera &camera)
 {
     // Transformations
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(model)));
-
-    glm::mat4 view = glm::lookAt(
-        glm::vec3(3.0f, 2.0f, 5.0f),
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 1.0f, 0.0f));
 
     glm::mat4 projection = glm::perspective(
         glm::radians(45.0f),
@@ -101,7 +98,7 @@ void drawCube(const Shader &shader, const Window &window)
     // Send uniforms
     shader.setMat3("normalMatrix", normalMatrix);
     shader.setMat4("model", model);
-    shader.setMat4("view", view);
+    shader.setMat4("view", camera.getViewMatrix());
     shader.setMat4("projection", projection);
 
     // Draw calls
@@ -116,6 +113,10 @@ int main()
     Window window(width, height, "VoxelCPP");
     Shader shader("shaders/shader.vert", "shaders/shader.frag");
 
+    Timer timer;
+    Input input(window.getNativeWindow());
+    Camera camera;
+
     // Set VSync off
     window.setVSync(false);
 
@@ -126,8 +127,16 @@ int main()
     {
         window.clear();
 
+        timer.update();
+        input.update();
+
+        if (input.isKeyPressed(GLFW_KEY_ESCAPE))
+            glfwSetWindowShouldClose(window.getNativeWindow(), true);
+
+        camera.update(input, timer.getDeltaTime());
+
         shader.bind();
-        drawCube(shader, window);
+        drawCube(shader, window, camera);
 
         window.swapBuffers();
         window.pollEvents();
