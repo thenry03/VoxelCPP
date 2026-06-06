@@ -1,5 +1,7 @@
 #include "Window.hpp"
 
+#include <glad/glad.h>
+
 #include <iostream>
 #include <stdexcept>
 
@@ -30,18 +32,29 @@ Window::Window(int width, int height, const std::string &title)
                                 title.c_str(),
                                 nullptr,
                                 nullptr);
-
     if (m_window == nullptr)
     {
         glfwTerminate();
         throw std::runtime_error("Could not create GLFW window.");
     }
 
+    // =========================
+    // 3. Create monitor
+    // =========================
+    m_monitor = glfwGetPrimaryMonitor();
+    m_mode = glfwGetVideoMode(m_monitor);
+
+    if (m_monitor == nullptr)
+    {
+        glfwTerminate();
+        throw std::runtime_error("Could not create GLFW monitor.");
+    }
+
     // Make current context
     glfwMakeContextCurrent(m_window);
 
     // =========================
-    // 3. Initialize GLAD
+    // 4. Initialize GLAD
     // =========================
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -51,10 +64,29 @@ Window::Window(int width, int height, const std::string &title)
     }
 
     // =========================
-    // 4. Viewport (resizing)
+    // 5. Register callbacks
     // =========================
     // Save this object in GLFW's window
     glfwSetWindowUserPointer(m_window, this);
+
+    // Register key callback
+    glfwSetKeyCallback(m_window, [](GLFWwindow *window, int key, int scancode, int action, int mods)
+                       {
+        (void)scancode;
+        (void) mods;
+        // Bridge the gap between GLFW C-style event system and object oriented Window class
+        // This line retrieves the C++ Window instance from the GLFW window handle
+        // This way the static callback can execute methods on the actual object
+        Window* instance = static_cast<Window*>(glfwGetWindowUserPointer(window));
+        if (instance)
+            instance->m_eventDispatcher.dispatchKey(key, action); });
+
+    // Register cursor position callback
+    glfwSetCursorPosCallback(m_window, [](GLFWwindow *window, double xPos, double yPos)
+                             {
+        Window* instance = static_cast<Window*>(glfwGetWindowUserPointer(window));
+        if (instance)
+            instance->m_eventDispatcher.dispatchMouse((float)xPos, (float)yPos); });
 
     // Configure initial viewport
     int fbW, fbH;
@@ -63,9 +95,12 @@ Window::Window(int width, int height, const std::string &title)
     m_width = fbW;
     m_height = fbH;
     glViewport(0, 0, m_width, m_height);
+    // Register resize callback
+    glfwSetFramebufferSizeCallback(m_window, framebuffer_size_callback);
 
-    // Register callback
-    glfwSetFramebufferSizeCallback(m_window, Window::framebuffer_size_callback);
+    // Subscribe onResize to dispatcher
+    m_eventDispatcher.onResize([this](int width, int height)
+                               { onResize(width, height); });
 }
 
 Window::~Window()
@@ -103,6 +138,33 @@ GLFWwindow *Window::getNativeWindow() const
     return m_window;
 }
 
+void Window::fullscreenOn()
+{
+    glfwSetWindowMonitor(m_window,
+                         m_monitor,
+                         0,
+                         0,
+                         m_mode->width,
+                         m_mode->height,
+                         m_mode->refreshRate);
+}
+
+void Window::fullscreenOff(unsigned int width, unsigned int height)
+{
+    glfwSetWindowMonitor(m_window,
+                         NULL,
+                         100,
+                         100,
+                         width,
+                         height,
+                         GLFW_DONT_CARE);
+}
+
+EventDispatcher &Window::getEventDispatcher()
+{
+    return m_eventDispatcher;
+}
+
 void Window::swapBuffers() const
 {
     glfwSwapBuffers(m_window);
@@ -127,13 +189,10 @@ void Window::clear(float r,
 // ==========================================
 void Window::framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
-    // Bridge the gap between GLFW C-style event system and object oriented Window class
-    // This line retrieves the C++ Window instance from the GLFW window handle
-    // This way the static callback can execute methods on the actual object
     Window *instance = static_cast<Window *>(glfwGetWindowUserPointer(window));
 
     if (instance)
-        instance->onResize(width, height);
+        instance->m_eventDispatcher.dispatchResize(width, height);
 }
 
 void Window::onResize(int width, int height)

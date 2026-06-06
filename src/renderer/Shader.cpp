@@ -1,12 +1,11 @@
 #include "Shader.hpp"
 
-#include <iostream>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 // ==========================================
 // HELPER METHODS
@@ -215,7 +214,7 @@ GLint Shader::getUniformLocation(const std::string &name) const
 
     if (location == -1)
     {
-        std::cerr << "Warning: uniform '" << name << "' not found.\n";
+        // std::cerr << "Warning: uniform '" << name << "' not found.\n";
         return -1;
     }
 

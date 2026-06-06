@@ -3,6 +3,10 @@ project(VoxelCPP VERSION 0.1.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Export compile_commands.json so editors (VS Code IntelliSense) use the
+# exact include paths and defines from the build.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -28,6 +32,9 @@ target_link_libraries(VoxelCPP PRIVATE
     glfw
     glm::glm
 )
+
+# Prevent GLFW from including the system OpenGL header; GLAD provides it.
+target_compile_definitions(VoxelCPP PRIVATE GLFW_INCLUDE_NONE)
 
 target_compile_options(VoxelCPP PRIVATE -Wall -Wextra -Wpedantic)
 

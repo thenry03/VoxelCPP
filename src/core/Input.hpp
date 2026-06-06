@@ -1,14 +1,19 @@
 #pragma once
 
-#include <array>
+#include "EventDispatcher.hpp"
 
 #include <GLFW/glfw3.h>
+
+#include <array>
+
+// Forward declaration
+class Window;
 
 class Input
 {
 public:
     // --- Lifecycle ---
-    Input(GLFWwindow *window);
+    explicit Input(Window& window);
     ~Input();
 
     // --- RAII ---
@@ -30,24 +35,13 @@ public:
     float getMouseDeltaY() const;
 
 private:
-    // --- Private methods ---
-    static void keyCallback(GLFWwindow *window,
-                            int key,
-                            int scancode,
-                            int action,
-                            int mods);
-
-    static void mouseCallback(GLFWwindow *window,
-                              double xPos,
-                              double yPos);
-
     // --- Private attributes ---
-    GLFWwindow *m_window = nullptr;
     std::array<bool, GLFW_KEY_LAST + 1> m_keys{};
     std::array<bool, GLFW_KEY_LAST + 1> m_keysPrev{};
     float m_mouseX = 0.0f;
     float m_mouseY = 0.0f;
     float m_mouseDeltaX = 0.0f;
     float m_mouseDeltaY = 0.0f;
-    bool m_firstMouse = true; // Stops first frame problems
+    double m_captureTime = 0.0f;
+    bool m_mouseReady = false;
 };

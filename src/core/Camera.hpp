@@ -1,10 +1,9 @@
 #pragma once
 
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-
 #include "Constants.hpp"
 #include "Input.hpp"
+
+#include <glm/glm.hpp>
 
 class Camera
 {
@@ -13,7 +12,7 @@ public:
     Camera(glm::vec3 position = CAM_START_POSITION,
            float yaw = CAM_YAW,
            float pitch = CAM_PITCH);
-    ~Camera();
+    ~Camera() = default;
 
     // --- Update ---
     void update(const Input &input, float deltaTime);

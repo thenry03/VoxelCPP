@@ -1,9 +1,10 @@
 #pragma once
 
-#include <string>
+#include "EventDispatcher.hpp"
 
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#include <string>
 
 class Window
 {
@@ -23,6 +24,9 @@ public:
 
     // --- Native pointer access ---
     GLFWwindow *getNativeWindow() const;
+    EventDispatcher& getEventDispatcher();
+    void fullscreenOn();
+    void fullscreenOff(unsigned int width, unsigned int height);
 
     // --- Options ---
     void setVSync(bool enabled) const;
@@ -41,7 +45,13 @@ private:
     void onResize(int width, int height);
 
     // --- Private attributes ---
-    GLFWwindow *m_window = nullptr;
-    int         m_width  = 0;
-    int         m_height = 0;
+    GLFWwindow        *m_window = nullptr;
+    GLFWmonitor       *m_monitor = nullptr;
+    const GLFWvidmode *m_mode = nullptr;
+    int                m_width = 0;
+    int                m_height = 0;
+    bool               m_fullscreen = false;
+    // Window is the only owner of the user pointer
+    // It will dispatch different events
+    EventDispatcher m_eventDispatcher;
 };

@@ -1,6 +1,5 @@
 #include "Camera.hpp"
 
-#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 // ==========================================
@@ -9,10 +8,11 @@
 Camera::Camera(glm::vec3 position, float yaw, float pitch)
     : m_position(position), m_yaw(yaw), m_pitch(pitch)
 {
-}
-
-Camera::~Camera()
-{
+    // Recalculate front vector from initial yaw and pitch
+    m_front.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
+    m_front.y = sin(glm::radians(m_pitch));
+    m_front.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
+    m_front = glm::normalize(m_front);
 }
 
 // ==========================================

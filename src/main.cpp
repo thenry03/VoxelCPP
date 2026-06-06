@@ -1,18 +1,51 @@
-#include <iostream>
+#include "core/Camera.hpp"
+#include "core/Constants.hpp"
+#include "core/Input.hpp"
+#include "core/Timer.hpp"
+#include "core/Window.hpp"
+#include "renderer/Shader.hpp"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "core/Window.hpp"
-#include "renderer/Shader.hpp"
-#include "core/Camera.hpp"
-#include "core/Input.hpp"
-#include "core/Timer.hpp"
+#include <iostream>
 
-constexpr int width = 800;
-constexpr int height = 600;
+// Maybe temporary?
+// Must match the actual startup state: the window is created windowed
+bool fullscreen = false;
+
+// Debugging
+unsigned int iterationCount = 0;
+
+void processInput(Input &input, Window &window)
+{
+    // Exit program
+    if (input.isKeyPressed(GLFW_KEY_ESCAPE))
+        glfwSetWindowShouldClose(window.getNativeWindow(), true);
+
+    // Toggle fullscreen on the press edge, not every frame the key is held
+    if (input.isKeyJustPressed(GLFW_KEY_F11))
+    {
+        if (fullscreen)
+            window.fullscreenOff(WINDOW_WIDTH, WINDOW_HEIGHT);
+        else
+            window.fullscreenOn();
+
+        fullscreen = !fullscreen;
+    }
+}
+
+void showFPS(Window &window, float fps, bool option)
+{
+    if (option)
+    {
+        // Set title: convert float FPS to string
+        std::string title = "VoxelCPP - FPS: " + std::to_string(fps);
+        glfwSetWindowTitle(window.getNativeWindow(), title.c_str());
+    }
+}
 
 // Define
 unsigned int VAO, VBO, EBO;
@@ -110,36 +143,50 @@ void drawCube(const Shader &shader, const Window &window, const Camera &camera)
 int main()
 {
     // Safe stack initialization
-    Window window(width, height, "VoxelCPP");
+    Window window(WINDOW_WIDTH, WINDOW_HEIGHT, "VoxelCPP");
     Shader shader("shaders/shader.vert", "shaders/shader.frag");
-
     Timer timer;
-    Input input(window.getNativeWindow());
+    Input input(window);
     Camera camera;
 
-    // Set VSync off
-    window.setVSync(false);
+    // Set VSync on
+    window.setVSync(true);
 
     defineCube();
     glEnable(GL_DEPTH_TEST);
 
+    // Debug
+    std::cout << "DEBUG: Window width is " << window.getWidth() << ".\n";
+    std::cout << "DEBUG: Window height is " << window.getHeight() << ".\n";
+
     while (!window.shouldClose())
     {
-        window.clear();
+        // Process all pending events
+        window.pollEvents();
 
-        timer.update();
-        input.update();
+        // Update current, delta, and last time
+        float fps = timer.update();
+        showFPS(window, fps, true);
 
-        if (input.isKeyPressed(GLFW_KEY_ESCAPE))
-            glfwSetWindowShouldClose(window.getNativeWindow(), true);
-
+        // Update vectors
         camera.update(input, timer.getDeltaTime());
 
+        // Clear Buffer Bit and Depth Bit
+        window.clear();
+
+        // Exit program and fullscreen (temporary solution)
+        processInput(input, window);
+
+        // Use shader program to draw cube
         shader.bind();
         drawCube(shader, window, camera);
 
+        // Prevent flickering
         window.swapBuffers();
-        window.pollEvents();
+
+        // Convert current keys to last keys
+        // Reset mouse deltas
+        input.update();
     }
 
     return EXIT_SUCCESS;
