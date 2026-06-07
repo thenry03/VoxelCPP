@@ -6,6 +6,7 @@
 #include "renderer/ChunkMesher.hpp"
 #include "renderer/ChunkRenderer.hpp"
 #include "renderer/Shader.hpp"
+#include "renderer/Texture.hpp"
 #include "world/Block.hpp"
 #include "world/Chunk.hpp"
 
@@ -63,12 +64,22 @@ int main()
     // IMPORTANT: must initialize the block database
     BlockDatabase::init();
 
+    // Initialize textures
+    Texture texture("assets/textures/atlas.png");
+
     // Trying chunk rendering!
     Chunk chunk(glm::ivec3(0, 0, 0));
     for (int x = 0; x < static_cast<int>(Config::World::CHUNK_WIDTH); x++)
         for (int z = 0; z < static_cast<int>(Config::World::CHUNK_DEPTH); z++)
             for (int y = 0; y < 7; y++)
-                chunk.setBlock(x, y, z, static_cast<uint8_t>(BlockType::Stone));
+            {
+                if (y == 6)
+                    chunk.setBlock(x, y, z, static_cast<uint8_t>(BlockType::Grass));
+                else if (y == 5)
+                    chunk.setBlock(x, y, z, static_cast<uint8_t>(BlockType::Dirt));
+                else
+                    chunk.setBlock(x, y, z, static_cast<uint8_t>(BlockType::Stone));
+            }
 
     // Generate a dumb mesh (everything draws)
     // ChunkMesh dumbMesh = ChunkMesher::generateDumbMesh(chunk);
@@ -106,8 +117,10 @@ int main()
         camera.update(input, timer.getDeltaTime());
 
         // Clear Buffer Bit and Depth Bit
-        window.clear();
-
+        window.clear(Config::Renderer::SKY_R,
+                     Config::Renderer::SKY_G,
+                     Config::Renderer::SKY_B,
+                     Config::Renderer::SKY_A);
         // Exit program and fullscreen (temporary solution)
         processInput(input, window);
 
@@ -127,7 +140,9 @@ int main()
         shader.setMat4("projection", projection);
 
         // Draw chunk
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        texture.bind(0);
+        shader.setInt("texture1", 0);
         chunkRenderer.draw();
 
         // Prevent flickering

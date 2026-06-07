@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-// Vertex data
+// --- Vertex data ---
 struct Vertex
 {
     glm::vec3 position;

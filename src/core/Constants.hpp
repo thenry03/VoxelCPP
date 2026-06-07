@@ -31,6 +31,17 @@ namespace Config
         constexpr float CURSOR_SETTLE_DELAY = 0.15f;
     }
 
+    // --- Renderer ---
+    namespace Renderer
+    {
+        constexpr float SKY_R = 0.53f;
+        constexpr float SKY_G = 0.81f;
+        constexpr float SKY_B = 0.98f;
+        constexpr float SKY_A = 1.0f;
+
+        constexpr float TEXTURE_UV_SIZE = 0.125f;
+    }
+
     // --- World ---
     namespace World
     {

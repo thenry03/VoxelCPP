@@ -36,6 +36,5 @@ private:
     // --- Private attributes ---
     GLuint m_programID = 0;
     // Location cache
-    mutable std::unordered_map<std::string, GLint> m_uniformLocationCache;
-        
+    mutable std::unordered_map<std::string, GLint> m_uniformLocationCache;    
 };

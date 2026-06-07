@@ -1,4 +1,5 @@
 #include "../world/Block.hpp"
+#include "BlockTextureMap.hpp"
 #include "ChunkMesher.hpp"
 
 #include <array>
@@ -11,6 +12,7 @@
 struct Face
 {
     std::array<glm::vec3, 4> offsets; // Offsets for each face in CCW order
+    std::array<glm::vec2, 4> uvs;     // UV base coords [0, 1]
     glm::vec3 normal;                 // Normal vector
     glm::ivec3 neighbourOffset;       // The neighbor's offset matches the integer normal
 };
@@ -27,18 +29,25 @@ const std::array<Face, 6> cubeFaces = {{
             glm::vec3(0.0f, 1.0f, 0.0f),
             glm::vec3(1.0f, 1.0f, 0.0f),
             glm::vec3(1.0f, 0.0f, 0.0f)},
-        // Normal and neighbour
+        // UVs
+        {
+            glm::vec2(1.0f, 0.0f),
+            glm::vec2(1.0f, 1.0f),
+            glm::vec2(0.0f, 1.0f),
+            glm::vec2(0.0f, 0.0f)},
+        // Normal and neighbour direction
         glm::vec3(0.0f, 0.0f, -1.0f),
         glm::ivec3(0, 0, -1)},
     // South (+Z)
     {
-        // Offsets
-        {
-            glm::vec3(0.0f, 0.0f, 1.0f),
-            glm::vec3(1.0f, 0.0f, 1.0f),
-            glm::vec3(1.0f, 1.0f, 1.0f),
-            glm::vec3(0.0f, 1.0f, 1.0f)},
-        // Normal and neighbour
+        {glm::vec3(0.0f, 0.0f, 1.0f),
+         glm::vec3(1.0f, 0.0f, 1.0f),
+         glm::vec3(1.0f, 1.0f, 1.0f),
+         glm::vec3(0.0f, 1.0f, 1.0f)},
+        {glm::vec2(0.0f, 0.0f),
+         glm::vec2(1.0f, 0.0f),
+         glm::vec2(1.0f, 1.0f),
+         glm::vec2(0.0f, 1.0f)},
         glm::vec3(0.0f, 0.0f, 1.0f),
         glm::ivec3(0, 0, 1)},
     // East (+X)
@@ -47,7 +56,10 @@ const std::array<Face, 6> cubeFaces = {{
          glm::vec3(1.0f, 1.0f, 0.0f),
          glm::vec3(1.0f, 1.0f, 1.0f),
          glm::vec3(1.0f, 0.0f, 1.0f)},
-        // Normal and neighbour
+        {glm::vec2(1.0f, 0.0f),
+         glm::vec2(1.0f, 1.0f),
+         glm::vec2(0.0f, 1.0f),
+         glm::vec2(0.0f, 0.0f)},
         glm::vec3(1.0f, 0.0f, 0.0f),
         glm::ivec3(1, 0, 0)},
     // West (-X)
@@ -56,29 +68,34 @@ const std::array<Face, 6> cubeFaces = {{
          glm::vec3(0.0f, 0.0f, 1.0f),
          glm::vec3(0.0f, 1.0f, 1.0f),
          glm::vec3(0.0f, 1.0f, 0.0f)},
-        // Normal and neighbour
+        {glm::vec2(0.0f, 0.0f),
+         glm::vec2(1.0f, 0.0f),
+         glm::vec2(1.0f, 1.0f),
+         glm::vec2(0.0f, 1.0f)},
         glm::vec3(-1.0f, 0.0f, 0.0f),
         glm::ivec3(-1, 0, 0)},
     // Top (+Y)
     {
-        // Offsets
-        {
-            glm::vec3(0.0f, 1.0f, 1.0f),
-            glm::vec3(1.0f, 1.0f, 1.0f),
-            glm::vec3(1.0f, 1.0f, 0.0f),
-            glm::vec3(0.0f, 1.0f, 0.0f)},
-        // Normal and neighbour
+        {glm::vec3(0.0f, 1.0f, 1.0f),
+         glm::vec3(1.0f, 1.0f, 1.0f),
+         glm::vec3(1.0f, 1.0f, 0.0f),
+         glm::vec3(0.0f, 1.0f, 0.0f)},
+        {glm::vec2(0.0f, 0.0f),
+         glm::vec2(1.0f, 0.0f),
+         glm::vec2(1.0f, 1.0f),
+         glm::vec2(0.0f, 1.0f)},
         glm::vec3(0.0f, 1.0f, 0.0f),
         glm::ivec3(0, 1, 0)},
     // Bottom (-Y)
     {
-        // Offsets
-        {
-            glm::vec3(0.0f, 0.0f, 1.0f),
-            glm::vec3(0.0f, 0.0f, 0.0f),
-            glm::vec3(1.0f, 0.0f, 0.0f),
-            glm::vec3(1.0f, 0.0f, 1.0f)},
-        // Normal and neighbour
+        {glm::vec3(0.0f, 0.0f, 1.0f),
+         glm::vec3(0.0f, 0.0f, 0.0f),
+         glm::vec3(1.0f, 0.0f, 0.0f),
+         glm::vec3(1.0f, 0.0f, 1.0f)},
+        {glm::vec2(0.0f, 0.0f),
+         glm::vec2(0.0f, 1.0f),
+         glm::vec2(1.0f, 1.0f),
+         glm::vec2(1.0f, 0.0f)},
         glm::vec3(0.0f, -1.0f, 0.0f),
         glm::ivec3(0, -1, 0)},
 }};
@@ -178,10 +195,51 @@ ChunkMesh ChunkMesher::generateCulledMesh(const Chunk &chunk)
                     faceVertices[1] = face.offsets[1] + glm::vec3(x, y, z);
                     faceVertices[2] = face.offsets[2] + glm::vec3(x, y, z);
                     faceVertices[3] = face.offsets[3] + glm::vec3(x, y, z);
-                    culledMesh.vertices.push_back(Vertex{faceVertices[0], face.normal, glm::vec2(0.0f)});
-                    culledMesh.vertices.push_back(Vertex{faceVertices[1], face.normal, glm::vec2(0.0f)});
-                    culledMesh.vertices.push_back(Vertex{faceVertices[2], face.normal, glm::vec2(0.0f)});
-                    culledMesh.vertices.push_back(Vertex{faceVertices[3], face.normal, glm::vec2(0.0f)});
+
+                    // This part is different: textures!
+                    // Get the texture layout
+                    BlockTextureLayout textureLayout = blockTextureMap[blockID];
+                    uint8_t textureID;
+
+                    // If normal is +Y, it is the top face
+                    // If normal is -Y, it is the bottom face
+                    // Anything else is a side face trated equally
+                    if (face.normal.y > 0.0f)
+                        textureID = textureLayout.top;
+                    else if (face.normal.y < 0.0f)
+                        textureID = textureLayout.bottom;
+                    else
+                        textureID = textureLayout.side;
+
+                    // Convert textureID to UV coords using 8x8 atlas math
+                    // Each tile occupies (size x size) in UV space, where size = 1/8 = 0.125
+                    // UV origin (0,0) is bottom-left; atlas origin is top-left, so V is flipped
+                    //
+                    // Nice example: Grass block top (textureID = 0)
+                    // column = 0 % 8 = 0
+                    // row    = 0 / 8 = 0
+                    // uMin   = 0 * 0.125f = 0.0f
+                    // vMin   = 1.0f - (0 * 0.125f) - 0.125f = 0.875f
+                    //
+                    // Face UVs are then scaled from [0,1] into [uMin, uMin+size] x [vMin, vMin+size]:
+                    // uv = (uMin + face.uvs[i].x * size, vMin + face.uvs[i].y * size)
+                    float size = Config::Renderer::TEXTURE_UV_SIZE;
+                    int column = textureID % 8;
+                    int row = textureID / 8;
+                    float uMin = column * size;
+                    float vMin = 1.0f - (row * size) - size;
+
+                    // Map the corners in CCW order
+                    glm::vec2 uv0 = glm::vec2(uMin + face.uvs[0].x * size, vMin + face.uvs[0].y * size);
+                    glm::vec2 uv1 = glm::vec2(uMin + face.uvs[1].x * size, vMin + face.uvs[1].y * size);
+                    glm::vec2 uv2 = glm::vec2(uMin + face.uvs[2].x * size, vMin + face.uvs[2].y * size);
+                    glm::vec2 uv3 = glm::vec2(uMin + face.uvs[3].x * size, vMin + face.uvs[3].y * size);
+
+                    // Push vertices with their newly calculated UVs
+                    culledMesh.vertices.push_back(Vertex{faceVertices[0], face.normal, uv0});
+                    culledMesh.vertices.push_back(Vertex{faceVertices[1], face.normal, uv1});
+                    culledMesh.vertices.push_back(Vertex{faceVertices[2], face.normal, uv2});
+                    culledMesh.vertices.push_back(Vertex{faceVertices[3], face.normal, uv3});
                 }
             }
 
