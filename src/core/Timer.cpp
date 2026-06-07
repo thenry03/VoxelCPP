@@ -7,7 +7,7 @@
 // ==========================================
 Timer::Timer()
 {
-    m_lastTime = (float)glfwGetTime();
+    m_lastTime = glfwGetTime();
     m_lastFPSTime = m_lastTime;
 }
 
@@ -22,8 +22,8 @@ float Timer::update()
 {
     // Important to prevent differences between hardware
     // Distance = Speed × Delta Time
-    m_currentTime = (float)glfwGetTime();
-    m_deltaTime = m_currentTime - m_lastTime;
+    m_currentTime = glfwGetTime();
+    m_deltaTime = static_cast<float>(m_currentTime - m_lastTime);
     // Important: last time should be update indepently from FPS
     // If not, WASD movement will break
     m_lastTime = m_currentTime;
@@ -32,14 +32,14 @@ float Timer::update()
     m_nbFrames++;
 
     // Must separate deltaTime calculation from FPS time calculation
-    float fpsElapsed = m_currentTime - m_lastFPSTime;
+    double fpsElapsed = m_currentTime - m_lastFPSTime;
 
-    if (fpsElapsed >= 1.0f)
+    if (fpsElapsed >= 1.0)
     {
         // Recalculate FPS once per second and cache it
-        m_fps = m_nbFrames / fpsElapsed;
+        m_fps = static_cast<float>(m_nbFrames / fpsElapsed);
         // Set frames to 0 and current time is now last frame's time
-        m_nbFrames = 0.0f;
+        m_nbFrames = 0;
         m_lastFPSTime = m_currentTime;
     }
 

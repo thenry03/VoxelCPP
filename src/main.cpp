@@ -3,7 +3,11 @@
 #include "core/Input.hpp"
 #include "core/Timer.hpp"
 #include "core/Window.hpp"
+#include "renderer/ChunkMesher.hpp"
+#include "renderer/ChunkRenderer.hpp"
 #include "renderer/Shader.hpp"
+#include "world/Block.hpp"
+#include "world/Chunk.hpp"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -29,7 +33,7 @@ void processInput(Input &input, Window &window)
     if (input.isKeyJustPressed(GLFW_KEY_F11))
     {
         if (fullscreen)
-            window.fullscreenOff(WINDOW_WIDTH, WINDOW_HEIGHT);
+            window.fullscreenOff(Config::Window::WIDTH, Config::Window::HEIGHT);
         else
             window.fullscreenOn();
 
@@ -47,117 +51,47 @@ void showFPS(Window &window, float fps, bool option)
     }
 }
 
-// Define
-unsigned int VAO, VBO, EBO;
-
-void defineCube()
-{
-    static const float vertices[] = {
-        // Front
-        -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-        1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-        // Back
-        -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-        1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f};
-
-    static const unsigned int indexes[] = {
-        // Front
-        0, 1, 2,
-        0, 2, 3,
-        // Right
-        1, 5, 6,
-        6, 2, 1,
-        // Back
-        7, 6, 5,
-        5, 4, 7,
-        // Left
-        4, 0, 3,
-        3, 7, 4,
-        // Bottom
-        4, 5, 1,
-        1, 0, 4,
-        // Top
-        3, 2, 6,
-        6, 7, 3};
-
-    // Generate
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    // Bind VAO
-    glBindVertexArray(VAO);
-
-    // Bind buffers
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexes), indexes, GL_STATIC_DRAW);
-
-    // Send data
-    // Position
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-    // Normal
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    // Texture
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-    // Unbind buffers
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // Unbind VAO
-    glBindVertexArray(0);
-}
-
-void drawCube(const Shader &shader, const Window &window, const Camera &camera)
-{
-    // Transformations
-    glm::mat4 model = glm::mat4(1.0f);
-    glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(model)));
-
-    glm::mat4 projection = glm::perspective(
-        glm::radians(45.0f),
-        (float)window.getWidth() / (float)window.getHeight(),
-        0.1f,
-        100.0f);
-
-    // Send uniforms
-    shader.setMat3("normalMatrix", normalMatrix);
-    shader.setMat4("model", model);
-    shader.setMat4("view", camera.getViewMatrix());
-    shader.setMat4("projection", projection);
-
-    // Draw calls
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
-    glBindVertexArray(0);
-}
-
 int main()
 {
     // Safe stack initialization
-    Window window(WINDOW_WIDTH, WINDOW_HEIGHT, "VoxelCPP");
+    Window window(Config::Window::WIDTH, Config::Window::HEIGHT, "VoxelCPP");
     Shader shader("shaders/shader.vert", "shaders/shader.frag");
     Timer timer;
     Input input(window);
     Camera camera;
 
+    // IMPORTANT: must initialize the block database
+    BlockDatabase::init();
+
+    // Trying chunk rendering!
+    Chunk chunk(glm::ivec3(0, 0, 0));
+    for (int x = 0; x < static_cast<int>(Config::World::CHUNK_WIDTH); x++)
+        for (int z = 0; z < static_cast<int>(Config::World::CHUNK_DEPTH); z++)
+            for (int y = 0; y < 7; y++)
+                chunk.setBlock(x, y, z, static_cast<uint8_t>(BlockType::Stone));
+
+    // Generate a dumb mesh (everything draws)
+    // ChunkMesh dumbMesh = ChunkMesher::generateDumbMesh(chunk);
+    // Generate a culled (smarter) mesh (only visible faces draw)
+    ChunkMesh culledMesh = ChunkMesher::generateCulledMesh(chunk);
+
+    // Update mesh
+    ChunkRenderer chunkRenderer;
+    // chunkRenderer.updateMesh(dumbMesh);
+    chunkRenderer.updateMesh(culledMesh);
+
     // Set VSync on
     window.setVSync(true);
 
-    defineCube();
     glEnable(GL_DEPTH_TEST);
 
     // Debug
     std::cout << "DEBUG: Window width is " << window.getWidth() << ".\n";
     std::cout << "DEBUG: Window height is " << window.getHeight() << ".\n";
+
+    // Send static matrices and uniforms
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(model)));
 
     while (!window.shouldClose())
     {
@@ -179,7 +113,22 @@ int main()
 
         // Use shader program to draw cube
         shader.bind();
-        drawCube(shader, window, camera);
+
+        // Send non-static matrices and uniforms
+        glm::mat4 view = camera.getViewMatrix();
+        float aspectRatio = static_cast<float>(window.getWidth()) / static_cast<float>(window.getHeight());
+        glm::mat4 projection = glm::perspective(glm::radians(Config::Camera::FOV),
+                                                aspectRatio,
+                                                Config::Camera::NEAR_PLANE,
+                                                Config::Camera::FAR_PLANE);
+        shader.setMat3("normalMatrix", normalMatrix);
+        shader.setMat4("model", model);
+        shader.setMat4("view", view);
+        shader.setMat4("projection", projection);
+
+        // Draw chunk
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        chunkRenderer.draw();
 
         // Prevent flickering
         window.swapBuffers();

@@ -1,13 +1,12 @@
 #pragma once
 
 #include <glm/glm.hpp>
+
 #include <cstddef>
 
 namespace Config
 {
-    // ==========================================
-    // 1. CORE
-    // ==========================================
+    // --- Core ---
     namespace Window
     {
         constexpr int WIDTH = 800;
@@ -32,18 +31,13 @@ namespace Config
         constexpr float CURSOR_SETTLE_DELAY = 0.15f;
     }
 
-    // ==========================================
-    // 2. WORLD
-    // ==========================================
+    // --- World ---
     namespace World
     {
-        // Renombramos conceptualmente a ejes X, Z, Y para que al escribir
-        // los bucles del Mesher o Generador sea imposible confundirse.
         constexpr std::size_t CHUNK_WIDTH = 16;
         constexpr std::size_t CHUNK_DEPTH = 16;
         constexpr std::size_t CHUNK_HEIGHT = 16;
 
-        // Volumen total del array plano del chunk
         constexpr std::size_t CHUNK_VOLUME = CHUNK_WIDTH * CHUNK_DEPTH * CHUNK_HEIGHT;
     }
 }
