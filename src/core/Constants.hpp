@@ -54,8 +54,8 @@ namespace Config
         constexpr int NOISE_SEED = static_cast<int>(10210511411511632ULL % 2147483647ULL);
         constexpr float NOISE_FREQUENCY = 0.005f;
         constexpr int NOISE_OCTAVES = 4;
-        constexpr float TERRAIN_BASE = 0.375f;      // Altura media del terreno
-        constexpr float TERRAIN_AMPLITUDE = 0.312f; // Rango de variación
-        constexpr int TERRAIN_DIRT_DEPTH = 3;       // Capas de tierra bajo la hierba
+        constexpr float TERRAIN_BASE = 0.375f;      // Mean terrain height factor
+        constexpr float TERRAIN_AMPLITUDE = 0.312f; // Height variation range factor
+        constexpr int TERRAIN_DIRT_DEPTH = 3;       // Dirt layers between grass and stone
     }
 }

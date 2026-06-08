@@ -6,6 +6,9 @@
 
 #include <string>
 
+// RAII wrapper over a GLFW window and its OpenGL context
+// Owns the sole glfwSetWindowUserPointer slot, which it uses to route
+// GLFW C callbacks back into C++ via EventDispatcher
 class Window
 {
 public:

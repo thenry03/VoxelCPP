@@ -4,8 +4,8 @@
 
 #include <glm/glm.hpp>
 
+#include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <vector>
 
 class Chunk
@@ -34,7 +34,7 @@ private:
     // - Third: + x = 3 ignored blocks (X coordinate)
     //   Skips 3 individual blocks within that same row of that same floor
     //   Is now pointing at the fourth block of the third row of the sixth floor
-    //   Indexes: (4 1, 6-1, 3-1) = (3, 5, 2)
+    //   Indexes: (4-1, 6-1, 3-1) = (3, 5, 2)
     inline std::size_t getIndex(int x, int y, int z) const
     {
         return static_cast<std::size_t>(x +

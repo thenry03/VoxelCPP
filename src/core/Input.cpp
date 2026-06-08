@@ -1,6 +1,7 @@
 #include "Input.hpp"
 
 #include "Constants.hpp"
+#include "EventDispatcher.hpp"
 #include "Window.hpp"
 
 // ==========================================
@@ -18,7 +19,7 @@ Input::Input(Window &window)
     if (glfwRawMouseMotionSupported())
         glfwSetInputMode(handle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
-    // Reference seed
+    // Seed the initial mouse position to avoid large delta on first frame
     double startX, startY;
     glfwGetCursorPos(handle, &startX, &startY);
     m_mouseX = static_cast<float>(startX);
@@ -47,8 +48,8 @@ Input::Input(Window &window)
             m_mouseDeltaY = m_mouseY - yPos;
         }
 
-         m_mouseX = xPos;
-    m_mouseY = yPos; });
+        m_mouseX = xPos;
+        m_mouseY = yPos; });
 }
 
 Input::~Input()

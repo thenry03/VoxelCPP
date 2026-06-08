@@ -24,8 +24,8 @@ float Timer::update()
     // Distance = Speed × Delta Time
     m_currentTime = glfwGetTime();
     m_deltaTime = static_cast<float>(m_currentTime - m_lastTime);
-    // Important: last time should be update indepently from FPS
-    // If not, WASD movement will break
+    // m_lastTime must be updated every frame, independently of the FPS counter
+    // Tying it to the FPS interval would break delta-time and, by extension, movement
     m_lastTime = m_currentTime;
 
     // Frame counter goes up

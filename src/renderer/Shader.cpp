@@ -3,7 +3,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <stdexcept>
 
@@ -12,34 +11,32 @@
 // ==========================================
 static std::string readFile(const std::string &shaderPath)
 {
-    // Read information from file in disk
+    // Open the shader source file on disk
     std::ifstream file(shaderPath);
 
     if (!file.is_open())
         throw std::runtime_error("Could not load shader file.");
 
-    // Read and write information in text memory buffer
+    // Dump the whole file into a string buffer
     std::stringstream buffer;
     buffer << file.rdbuf();
 
-    // Return a string object
     return buffer.str();
 }
 
+// Queries the compilation status of a shader object
+// Throws std::runtime_error with the driver's info log on failure
+// Cleans up both shader handles before throwing
 static void compilationCheck(GLuint shader, GLuint vertexShader, GLuint fragmentShader)
 {
-    // Create a variable to store result
     GLint compilationSuccessful;
-    // Store result in said variable
     glGetShaderiv(shader, GL_COMPILE_STATUS, &compilationSuccessful);
-    // Check if compilation resulted successful
     if (!compilationSuccessful)
     {
-        // Store compilation error in buffer
         GLchar infoLog[512];
         glGetShaderInfoLog(shader, 512, nullptr, infoLog);
 
-        // Delete both vertex and fragment shader
+        // Clean up both shaders before throwing
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
 
@@ -47,20 +44,19 @@ static void compilationCheck(GLuint shader, GLuint vertexShader, GLuint fragment
     }
 }
 
+// Queries the link status of a shader program
+// Throws std::runtime_error with the driver's info log on failure
+// Cleans up the program and both shader handles before throwing
 static void linkCheck(GLuint shader, GLuint vertexShader, GLuint fragmentShader)
 {
-    // Create a variable to store result
     GLint linkSuccessful;
-    // Store result in said variable
     glGetProgramiv(shader, GL_LINK_STATUS, &linkSuccessful);
-    // Check if link resulted successful
     if (!linkSuccessful)
     {
-        // Store link error in buffer
         GLchar infoLog[512];
         glGetProgramInfoLog(shader, 512, nullptr, infoLog);
 
-        // Delete program and both vertex and fragment shader
+        // Clean up the program and both shaders before throwing
         glDeleteProgram(shader);
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
@@ -146,7 +142,6 @@ void Shader::setInt(const std::string &name, int value) const
     if (location == -1)
         return;
 
-    // Send uniform
     glUniform1i(location, value);
 }
 
@@ -156,7 +151,6 @@ void Shader::setFloat(const std::string &name, float value) const
     if (location == -1)
         return;
 
-    // Send uniform
     glUniform1f(location, value);
 }
 
@@ -166,7 +160,6 @@ void Shader::setVec3(const std::string &name, const glm::vec3 &value) const
     if (location == -1)
         return;
 
-    // Send uniform
     glUniform3f(location, value.x, value.y, value.z);
 }
 
@@ -176,7 +169,6 @@ void Shader::setVec4(const std::string &name, const glm::vec4 &value) const
     if (location == -1)
         return;
 
-    // Send uniform
     glUniform4f(location, value.x, value.y, value.z, value.w);
 }
 
@@ -186,7 +178,6 @@ void Shader::setMat3(const std::string &name, const glm::mat3 &value) const
     if (location == -1)
         return;
 
-    // Send uniform
     glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(value));
 }
 
@@ -196,7 +187,6 @@ void Shader::setMat4(const std::string &name, const glm::mat4 &value) const
     if (location == -1)
         return;
 
-    // Send uniform
     glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
 }
 
@@ -209,17 +199,14 @@ GLint Shader::getUniformLocation(const std::string &name) const
     if (m_uniformLocationCache.find(name) != m_uniformLocationCache.end())
         return m_uniformLocationCache[name];
 
-    // Ask GPU using .c_str() so it compiles with no errors
+    // glGetUniformLocation requires a C-string; .c_str() provides the raw pointer
     GLint location = glGetUniformLocation(m_programID, name.c_str());
 
     if (location == -1)
-    {
-        // std::cerr << "Warning: uniform '" << name << "' not found.\n";
         return -1;
-    }
 
     // Store in cache for next frame
     m_uniformLocationCache[name] = location;
-    
+
     return location;
 }

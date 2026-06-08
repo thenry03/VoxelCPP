@@ -2,6 +2,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <cmath>
+
 // ==========================================
 // 1. LIFECYCLE
 // ==========================================
@@ -20,7 +22,7 @@ Camera::Camera(glm::vec3 position, float yaw, float pitch)
 // ==========================================
 void Camera::update(const Input &input, float deltaTime)
 {
-    // Disengage movement from FPS count (critical)
+    // Scales velocity by elapsed time to ensure frame-rate independent movement
     float speed = m_moveSpeed * deltaTime;
 
     // Handle player movement
@@ -39,9 +41,9 @@ void Camera::update(const Input &input, float deltaTime)
     if (input.isKeyPressed(GLFW_KEY_LEFT_SHIFT))
         m_position -= m_up * speed;
 
-    // How much the mouse moved left or right
+    // How much the cursor moved left or right
     m_yaw += input.getMouseDeltaX() * m_mouseSensitivity;
-    // How much the mouse moved up or down
+    // How much the cursor moved up or down
     m_pitch += input.getMouseDeltaY() * m_mouseSensitivity;
 
     // Limit pitch

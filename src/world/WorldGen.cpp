@@ -18,7 +18,9 @@ namespace
         // Configure the noise object
         // Simplex noise as a test
         noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        // No idea what the following three lines do, trying stuff
+        // Fractal Brownian Motion: layers multiple noise octaves
+        // It does so at increasing frequencies and decreasing amplitudes
+        // Produces natural-looking terrain
         noise.SetFractalType(FastNoiseLite::FractalType_FBm);
         noise.SetFractalOctaves(Config::World::NOISE_OCTAVES);
         noise.SetFrequency(Config::World::NOISE_FREQUENCY);
@@ -26,11 +28,9 @@ namespace
         // Easter Egg hidden in noise seed
         noise.SetSeed(Config::World::NOISE_SEED);
 
-        // Base height
-        // With current value, if height is 256, 96 is the middle
+        // Mid-level of the terrain, as a fraction of the chunk height
         const float baseHeight = Config::World::TERRAIN_BASE * Config::World::CHUNK_HEIGHT;
-        // Amplitude
-        // 80 block range (up/down)
+        // How far the surface rises and falls around the base height
         const float amplitude = Config::World::TERRAIN_AMPLITUDE * Config::World::CHUNK_HEIGHT;
 
         // Chunk position does not change, out of the loop for efficiency
@@ -45,8 +45,7 @@ namespace
                 float worldZ = static_cast<float>(chunkPosition.z * Config::World::CHUNK_DEPTH + z);
 
                 // Sample 2D noise using horizontal X and Z coords
-                float noiseValue = noise.GetNoise(static_cast<float>(worldX),
-                                                  static_cast<float>(worldZ));
+                float noiseValue = noise.GetNoise(worldX, worldZ);
 
                 // Map the noise value from [-1.0, 1.0] to usable height block index
                 int surfaceHeight = static_cast<int>((noiseValue * amplitude) + baseHeight);
@@ -70,17 +69,15 @@ namespace
             }
     }
 
-    // TODO
+    // TODO: implement 3D cave and overhang generation using Simple3D noise
     void generate3DNoise([[maybe_unused]] Chunk &chunk)
     {
-
     }
 }
 
 // ==========================================
 // 2. PUBLIC METHODS
 // ==========================================
-// Public API implementation
 Chunk WorldGen::generateChunk(const glm::ivec3 &chunkPosition, GenerationType type)
 {
     // Create chunk object to return
@@ -89,16 +86,16 @@ Chunk WorldGen::generateChunk(const glm::ivec3 &chunkPosition, GenerationType ty
     // Route the execution based on choice
     switch (type)
     {
-        // 2D noise
-        case GenerationType::Simplex2D:
-            generate2DNoise(chunk);
-            break;
-        // 3D noise
-        case GenerationType::Simplex3D:
-            generate3DNoise(chunk);
-            break;
-        default:
-            generate2DNoise(chunk);
+    // 2D noise
+    case GenerationType::Simplex2D:
+        generate2DNoise(chunk);
+        break;
+    // 3D noise
+    case GenerationType::Simplex3D:
+        generate3DNoise(chunk);
+        break;
+    default:
+        generate2DNoise(chunk);
     }
 
     return chunk;
