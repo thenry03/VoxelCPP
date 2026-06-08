@@ -95,11 +95,8 @@ int main()
     // Set VSync on
     window.setVSync(true);
 
+    // Enable depth testing
     glEnable(GL_DEPTH_TEST);
-
-    // Debug
-    std::cout << "DEBUG: Window width is " << window.getWidth() << ".\n";
-    std::cout << "DEBUG: Window height is " << window.getHeight() << ".\n";
 
     // Send static matrices and uniforms
     // Chunks only translate, so the normal matrix stays identity for all of them
