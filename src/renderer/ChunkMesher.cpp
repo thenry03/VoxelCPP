@@ -1,6 +1,6 @@
+#include "ChunkMesher.hpp"
 #include "../world/Block.hpp"
 #include "BlockTextureMap.hpp"
-#include "ChunkMesher.hpp"
 
 #include <array>
 
@@ -153,7 +153,7 @@ ChunkMesh ChunkMesher::generateDumbMesh(const Chunk &chunk)
 }
 
 // Face culling (draws)
-ChunkMesh ChunkMesher::generateCulledMesh(const Chunk &chunk)
+ChunkMesh ChunkMesher::generateCulledMesh(const Chunk &chunk, const ChunkManager &chunkManager)
 {
     ChunkMesh culledMesh;
     // Same philosophy
@@ -167,9 +167,51 @@ ChunkMesh ChunkMesher::generateCulledMesh(const Chunk &chunk)
                 for (const Face &face : cubeFaces)
                 {
                     // CHANGE: check neighbouring face
-                    uint8_t neighbourID = chunk.getBlock(x + face.neighbourOffset.x,
-                                                         y + face.neighbourOffset.y,
-                                                         z + face.neighbourOffset.z);
+                    // Position + offset
+                    int nx = x + face.neighbourOffset.x;
+                    int ny = y + face.neighbourOffset.y;
+                    int nz = z + face.neighbourOffset.z;
+
+                    // Define a neighbourID uint8_t type
+                    uint8_t neighbourID;
+
+                    // Is the neighbouring face outside the current chunk?
+                    bool outsideX = nx < 0 || nx >= static_cast<int>(Config::World::CHUNK_WIDTH);
+                    bool outsideZ = nz < 0 || nz >= static_cast<int>(Config::World::CHUNK_DEPTH);
+                    bool outsideY = ny < 0 || ny >= static_cast<int>(Config::World::CHUNK_HEIGHT);
+
+                    // If it is, check which one
+                    if (outsideX || outsideY || outsideZ)
+                    {
+                        // Check which neighbour and which local coords
+                        glm::ivec3 neighbourChunkPosition = chunk.getPosition() + face.neighbourOffset;
+
+                        // Calculate local block coordinates
+                        int localX = ((nx %
+                                       static_cast<int>(Config::World::CHUNK_WIDTH)) +
+                                      static_cast<int>(Config::World::CHUNK_WIDTH)) %
+                                     static_cast<int>(Config::World::CHUNK_WIDTH);
+                        int localZ = ((nz %
+                                       static_cast<int>(Config::World::CHUNK_DEPTH)) +
+                                      static_cast<int>(Config::World::CHUNK_DEPTH)) %
+                                     static_cast<int>(Config::World::CHUNK_DEPTH);
+                        int localY = ((ny %
+                                       static_cast<int>(Config::World::CHUNK_HEIGHT)) +
+                                      static_cast<int>(Config::World::CHUNK_HEIGHT)) %
+                                     static_cast<int>(Config::World::CHUNK_HEIGHT);
+
+                        // Chunk manager handles outside local chunk faces
+                        if (chunkManager.hasChunk(neighbourChunkPosition))
+                            neighbourID = chunkManager.getChunk(neighbourChunkPosition).getBlock(localX, localY, localZ);
+                        else
+                            // Chunk not loaded, treat as air
+                            neighbourID = 0;
+                    }
+                    else
+                        // Block is in the same chunk
+                        neighbourID = chunk.getBlock(nx, ny, nz);
+                    
+
                     // If the neighbouring face is solid:
                     // - This face cannot be seen
                     // - There is no point in drawing it

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../world/Chunk.hpp"
+#include "../world/ChunkManager.hpp"
 #include "Vertex.hpp"
 
 #include <vector>
@@ -20,5 +21,5 @@ namespace ChunkMesher
     // Prevents heavy copies
     // Several meshing algorithms
     ChunkMesh generateDumbMesh(const Chunk &chunk);
-    ChunkMesh generateCulledMesh(const Chunk &chunk);
+    ChunkMesh generateCulledMesh(const Chunk &chunk, const ChunkManager &chunkManager);
 }

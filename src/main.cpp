@@ -9,20 +9,23 @@
 #include "renderer/Texture.hpp"
 #include "world/Block.hpp"
 #include "world/Chunk.hpp"
+#include "world/ChunkManager.hpp"
+#include "world/WorldGen.hpp"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <cstdlib>
 #include <iostream>
+#include <memory>
+#include <string>
+#include <unordered_map>
 
 // Maybe temporary?
 // Must match the actual startup state: the window is created windowed
 bool fullscreen = false;
-
-// Debugging
-unsigned int iterationCount = 0;
 
 void processInput(Input &input, Window &window)
 {
@@ -68,28 +71,26 @@ int main()
     Texture texture("assets/textures/atlas.png");
 
     // Trying chunk rendering!
-    Chunk chunk(glm::ivec3(0, 0, 0));
-    for (int x = 0; x < static_cast<int>(Config::World::CHUNK_WIDTH); x++)
-        for (int z = 0; z < static_cast<int>(Config::World::CHUNK_DEPTH); z++)
-            for (int y = 0; y < 7; y++)
-            {
-                if (y == 6)
-                    chunk.setBlock(x, y, z, static_cast<uint8_t>(BlockType::Grass));
-                else if (y == 5)
-                    chunk.setBlock(x, y, z, static_cast<uint8_t>(BlockType::Dirt));
-                else
-                    chunk.setBlock(x, y, z, static_cast<uint8_t>(BlockType::Stone));
-            }
+    // EDIT 1: Now with noise!
+    // EDIT 2: Multiple chunks!
+    // EDIT 3: Chunk manager!
+    ChunkManager chunkManager;
+    chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(0, 0, 0), WorldGen::GenerationType::Simplex2D));
+    chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(1, 0, 0), WorldGen::GenerationType::Simplex2D));
+    chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(0, 0, 1), WorldGen::GenerationType::Simplex2D));
+    chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(1, 0, 1), WorldGen::GenerationType::Simplex2D));
 
-    // Generate a dumb mesh (everything draws)
-    // ChunkMesh dumbMesh = ChunkMesher::generateDumbMesh(chunk);
-    // Generate a culled (smarter) mesh (only visible faces draw)
-    ChunkMesh culledMesh = ChunkMesher::generateCulledMesh(chunk);
+    // Renderer HashMap
+    std::unordered_map<glm::ivec3, std::unique_ptr<ChunkRenderer>, IVec3Hash> chunkRenderers;
 
-    // Update mesh
-    ChunkRenderer chunkRenderer;
-    // chunkRenderer.updateMesh(dumbMesh);
-    chunkRenderer.updateMesh(culledMesh);
+    // Range based for to iterate through every loaded chunk
+    for (const auto &[position, chunk] : chunkManager)
+    {
+        // Mesh chunk and update mesh
+        ChunkMesh chunkMesh = ChunkMesher::generateCulledMesh(chunk, chunkManager);
+        chunkRenderers[position] = std::make_unique<ChunkRenderer>();
+        chunkRenderers[position]->updateMesh(chunkMesh);
+    }
 
     // Set VSync on
     window.setVSync(true);
@@ -101,8 +102,13 @@ int main()
     std::cout << "DEBUG: Window height is " << window.getHeight() << ".\n";
 
     // Send static matrices and uniforms
-    glm::mat4 model = glm::mat4(1.0f);
-    glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(model)));
+    // Chunks only translate, so the normal matrix stays identity for all of them
+    glm::mat3 normalMatrix = glm::mat3(1.0f);
+
+    // Cached chunk dimensions, used to translate each chunk to world space
+    glm::ivec3 chunkSize(static_cast<int>(Config::World::CHUNK_WIDTH),
+                         static_cast<int>(Config::World::CHUNK_HEIGHT),
+                         static_cast<int>(Config::World::CHUNK_DEPTH));
 
     while (!window.shouldClose())
     {
@@ -135,15 +141,21 @@ int main()
                                                 Config::Camera::NEAR_PLANE,
                                                 Config::Camera::FAR_PLANE);
         shader.setMat3("normalMatrix", normalMatrix);
-        shader.setMat4("model", model);
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
 
-        // Draw chunk
+        // Draw each chunk at its world position
         // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         texture.bind(0);
         shader.setInt("texture1", 0);
-        chunkRenderer.draw();
+        for (const auto &[position, renderer] : chunkRenderers)
+        {
+            // Mesh vertices are local (0..16), so translate the chunk into world space
+            glm::mat4 model = glm::translate(glm::mat4(1.0f),
+                                             glm::vec3(position * chunkSize));
+            shader.setMat4("model", model);
+            renderer->draw();
+        }
 
         // Prevent flickering
         window.swapBuffers();

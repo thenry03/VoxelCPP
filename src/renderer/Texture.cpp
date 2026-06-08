@@ -4,7 +4,6 @@
 
 #include <stb_image.h>
 
-#include <stdio.h>
 #include <stdexcept>
 
 // ==========================================
