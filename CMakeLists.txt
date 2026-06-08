@@ -25,6 +25,8 @@ target_include_directories(VoxelCPP PRIVATE
     third_party/glad/include
     third_party/glfw/include
     third_party/glm
+    third_party/stb
+    third_party/FastNoiseLite
 )
 
 target_link_libraries(VoxelCPP PRIVATE

@@ -1,7 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
+#include <string_view>
+#include <type_traits>
 
 // --- Block type definition ---
 // Defines block types
@@ -9,13 +10,28 @@
 // Limits block types to 256, WAY more than enough
 enum class BlockType : uint8_t
 {
-    // Surface
     Air = 0,
+
+    // Surface
     Grass = 1,
     Dirt = 2,
-    Water = 3,
+    Sand = 3,
+    Gravel = 4,
+
     // Underground
-    Stone = 4,
+    Stone = 5,
+    Granite = 6,
+    Coal = 7,
+    Iron = 8,
+    Diamond = 9,
+
+    // Flora
+    Wood = 10,
+    Leaves = 11,
+
+    // Liquids
+    Water = 12,
+    Lava = 13,
 
     Count // How many blocks are there?
 };

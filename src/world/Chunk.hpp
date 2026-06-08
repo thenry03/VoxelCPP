@@ -4,8 +4,8 @@
 
 #include <glm/glm.hpp>
 
-#include <memory>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 class Chunk

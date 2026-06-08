@@ -1,13 +1,12 @@
 #pragma once
 
 #include <glm/glm.hpp>
+
 #include <cstddef>
 
 namespace Config
 {
-    // ==========================================
-    // 1. CORE
-    // ==========================================
+    // --- Core ---
     namespace Window
     {
         constexpr int WIDTH = 800;
@@ -16,7 +15,7 @@ namespace Config
 
     namespace Camera
     {
-        constexpr float MOVE_SPEED = 5.0f;
+        constexpr float MOVE_SPEED = 10.0f;
         constexpr float MOUSE_SENSITIVITY = 0.075f;
         inline const glm::vec3 START_POSITION = glm::vec3(0.0f, 0.0f, 5.0f);
         constexpr float YAW = -90.0f;
@@ -32,18 +31,31 @@ namespace Config
         constexpr float CURSOR_SETTLE_DELAY = 0.15f;
     }
 
-    // ==========================================
-    // 2. WORLD
-    // ==========================================
+    // --- Renderer ---
+    namespace Renderer
+    {
+        constexpr float SKY_R = 0.53f;
+        constexpr float SKY_G = 0.81f;
+        constexpr float SKY_B = 0.98f;
+        constexpr float SKY_A = 1.0f;
+
+        constexpr float TEXTURE_UV_SIZE = 0.125f;
+    }
+
+    // --- World ---
     namespace World
     {
-        // Renombramos conceptualmente a ejes X, Z, Y para que al escribir
-        // los bucles del Mesher o Generador sea imposible confundirse.
         constexpr std::size_t CHUNK_WIDTH = 16;
         constexpr std::size_t CHUNK_DEPTH = 16;
         constexpr std::size_t CHUNK_HEIGHT = 16;
-
-        // Volumen total del array plano del chunk
         constexpr std::size_t CHUNK_VOLUME = CHUNK_WIDTH * CHUNK_DEPTH * CHUNK_HEIGHT;
+
+        // WorldGen
+        constexpr int NOISE_SEED = static_cast<int>(10210511411511632ULL % 2147483647ULL);
+        constexpr float NOISE_FREQUENCY = 0.005f;
+        constexpr int NOISE_OCTAVES = 4;
+        constexpr float TERRAIN_BASE = 0.375f;      // Altura media del terreno
+        constexpr float TERRAIN_AMPLITUDE = 0.312f; // Rango de variación
+        constexpr int TERRAIN_DIRT_DEPTH = 3;       // Capas de tierra bajo la hierba
     }
 }

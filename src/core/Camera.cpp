@@ -45,10 +45,10 @@ void Camera::update(const Input &input, float deltaTime)
     m_pitch += input.getMouseDeltaY() * m_mouseSensitivity;
 
     // Limit pitch
-    if (m_pitch > CAM_PITCH_LIMIT)
-        m_pitch = CAM_PITCH_LIMIT;
-    if (m_pitch < -CAM_PITCH_LIMIT)
-        m_pitch = -CAM_PITCH_LIMIT;
+    if (m_pitch > Config::Camera::PITCH_LIMIT)
+        m_pitch = Config::Camera::PITCH_LIMIT;
+    if (m_pitch < -Config::Camera::PITCH_LIMIT)
+        m_pitch = -Config::Camera::PITCH_LIMIT;
 
     // Convert Euler angles to a direction vector using spherical projection
     // cos(pitch) flattens X and Z as the camera looks up or down
