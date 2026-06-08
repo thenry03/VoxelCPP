@@ -8,7 +8,7 @@
 #include <stdexcept>
 
 // ==========================================
-// HELPER METHODS
+// 1. HELPER METHODS
 // ==========================================
 static std::string readFile(const std::string &shaderPath)
 {
@@ -70,7 +70,7 @@ static void linkCheck(GLuint shader, GLuint vertexShader, GLuint fragmentShader)
 }
 
 // ==========================================
-// 1. LIFECYCLE
+// 2. LIFECYCLE
 // ==========================================
 Shader::Shader(const std::string &vertPath, const std::string &fragPath)
 {
@@ -128,7 +128,7 @@ Shader::~Shader()
 }
 
 // ==========================================
-// 2. PUBLIC METHODS
+// 3. PUBLIC METHODS
 // ==========================================
 void Shader::bind() const
 {
@@ -201,7 +201,7 @@ void Shader::setMat4(const std::string &name, const glm::mat4 &value) const
 }
 
 // ==========================================
-// 3. PRIVATE METHODS
+// 4. PRIVATE METHODS
 // ==========================================
 GLint Shader::getUniformLocation(const std::string &name) const
 {

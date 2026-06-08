@@ -149,7 +149,7 @@ void Window::fullscreenOn()
                          m_mode->refreshRate);
 }
 
-void Window::fullscreenOff(unsigned int width, unsigned int height)
+void Window::fullscreenOff(int width, int height)
 {
     glfwSetWindowMonitor(m_window,
                          NULL,

@@ -2,20 +2,60 @@
 
 #include <glm/glm.hpp>
 
-// Window
-constexpr int WINDOW_WIDTH = 800;
-constexpr int WINDOW_HEIGHT = 600;
+#include <cstddef>
 
-// Camera
-constexpr float CAM_MOVE_SPEED = 5.0f;
-constexpr float CAM_MOUSE_SENSITIVITY = 0.075f;
-inline const glm::vec3 CAM_START_POSITION = glm::vec3(0.0f, 0.0f, 5.0f);
-constexpr float CAM_YAW = -90.0f;
-constexpr float CAM_PITCH = 0.0f;
-constexpr float CAM_PITCH_LIMIT = 89.0f;
-constexpr float CAM_NEAR = 0.1f;
-constexpr float CAM_FAR = 100.0f;
-constexpr float CAM_FOV = 45.0f;
+namespace Config
+{
+    // --- Core ---
+    namespace Window
+    {
+        constexpr int WIDTH = 800;
+        constexpr int HEIGHT = 600;
+    }
 
-// Input
-constexpr float CURSOR_SETTLE_DELAY = 0.15f;
+    namespace Camera
+    {
+        constexpr float MOVE_SPEED = 10.0f;
+        constexpr float MOUSE_SENSITIVITY = 0.075f;
+        inline const glm::vec3 START_POSITION = glm::vec3(0.0f, 0.0f, 5.0f);
+        constexpr float YAW = -90.0f;
+        constexpr float PITCH = 0.0f;
+        constexpr float PITCH_LIMIT = 89.0f;
+        constexpr float NEAR_PLANE = 0.1f;
+        constexpr float FAR_PLANE = 100.0f;
+        constexpr float FOV = 45.0f;
+    }
+
+    namespace Input
+    {
+        constexpr float CURSOR_SETTLE_DELAY = 0.15f;
+    }
+
+    // --- Renderer ---
+    namespace Renderer
+    {
+        constexpr float SKY_R = 0.53f;
+        constexpr float SKY_G = 0.81f;
+        constexpr float SKY_B = 0.98f;
+        constexpr float SKY_A = 1.0f;
+
+        constexpr float TEXTURE_UV_SIZE = 0.125f;
+    }
+
+    // --- World ---
+    namespace World
+    {
+        constexpr std::size_t CHUNK_WIDTH = 16;
+        constexpr std::size_t CHUNK_DEPTH = 16;
+        constexpr std::size_t CHUNK_HEIGHT = 16;
+        constexpr std::size_t CHUNK_VOLUME = CHUNK_WIDTH * CHUNK_DEPTH * CHUNK_HEIGHT;
+
+        // WorldGen
+        constexpr int NOISE_SEED = static_cast<int>(10210511411511632ULL % 2147483647ULL);
+        constexpr float NOISE_FREQUENCY = 0.005f;
+        constexpr int NOISE_OCTAVES = 4;
+        constexpr float TERRAIN_BASE = 0.375f;      // Altura media del terreno
+        constexpr float TERRAIN_AMPLITUDE = 0.312f; // Rango de variación
+        constexpr int TERRAIN_DIRT_DEPTH = 3;       // Capas de tierra bajo la hierba
+    }
+}

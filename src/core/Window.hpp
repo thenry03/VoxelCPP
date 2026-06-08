@@ -26,7 +26,7 @@ public:
     GLFWwindow *getNativeWindow() const;
     EventDispatcher& getEventDispatcher();
     void fullscreenOn();
-    void fullscreenOff(unsigned int width, unsigned int height);
+    void fullscreenOff(int width, int height);
 
     // --- Options ---
     void setVSync(bool enabled) const;

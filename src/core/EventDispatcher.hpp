@@ -19,7 +19,7 @@ public:
     void dispatchResize(int width, int height);
 
 private:
-    // --- Private attributes
+    // --- Private attributes ---
     std::vector<std::function<void(int key, int action)>> m_keyCallbacks;
     std::vector<std::function<void(float xPos, float yPos)>> m_mouseCallbacks;
     std::vector<std::function<void(int width, int height)>> m_resizeCallbacks;

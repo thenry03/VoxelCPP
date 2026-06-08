@@ -1,5 +1,6 @@
-#include "Constants.hpp"
 #include "Input.hpp"
+
+#include "Constants.hpp"
 #include "Window.hpp"
 
 // ==========================================
@@ -65,7 +66,7 @@ void Input::update()
     m_mouseDeltaY = 0.0f;
 
     // Trust deltas only when cursor settles
-    if (!m_mouseReady && (glfwGetTime() - m_captureTime) > CURSOR_SETTLE_DELAY)
+    if (!m_mouseReady && (glfwGetTime() - m_captureTime) > Config::Input::CURSOR_SETTLE_DELAY)
         m_mouseReady = true;
 }
 
