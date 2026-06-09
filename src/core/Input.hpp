@@ -1,7 +1,5 @@
 #pragma once
 
-#include "EventDispatcher.hpp"
-
 #include <GLFW/glfw3.h>
 
 #include <array>
@@ -17,11 +15,7 @@ public:
     ~Input();
 
     // --- RAII ---
-    // Especially important:
-    // Input(const Input&) = delete prevents Input b = a;
-    // Input& operator=(const Input&) = delete prevents b = a;
-    // (when b already exists)
-    // What input is used if copies are allowed?
+    // Non-copyable: input state is unique to one window
     Input(const Input &)            = delete;
     Input &operator=(const Input &) = delete;
 

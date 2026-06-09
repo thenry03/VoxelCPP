@@ -3,11 +3,14 @@
 #include <functional>
 #include <vector>
 
+// Typed event bus that decouples GLFW callbacks from their consumers
+// Window owns the dispatcher and fires events; subsystems (Input, etc.)
+// subscribe via onKey/onMouse/onResize without knowing about each other
 class EventDispatcher
 {
 public:
     // --- Lifecycle ---
-    EventDispatcher()  = default;
+    EventDispatcher() = default;
     ~EventDispatcher() = default;
 
     // --- onEvent methods ---

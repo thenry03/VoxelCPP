@@ -87,7 +87,7 @@ Texture::~Texture()
 // ==========================================
 void Texture::bind(unsigned int slot) const
 {
-    // Always GLTEXTURE 0 because an atlas is a single texture
+    // Activates the given texture unit before binding
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, m_textureID);
 }

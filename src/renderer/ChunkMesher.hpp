@@ -19,7 +19,10 @@ namespace ChunkMesher
     // --- Public interface ---
     // Constant reference (&) of Chunk is passed
     // Prevents heavy copies
-    // Several meshing algorithms
+    // Naive mesh: emits all 6 faces for every solid voxel
+    // Simple, but wasteful
     ChunkMesh generateDumbMesh(const Chunk &chunk);
+    // Culled mesh: skips faces shared with solid neighbours
+    // Requires ChunkManager to resolve faces at chunk boundaries
     ChunkMesh generateCulledMesh(const Chunk &chunk, const ChunkManager &chunkManager);
 }

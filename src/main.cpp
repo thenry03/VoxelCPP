@@ -18,13 +18,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <cstdlib>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_map>
 
-// Maybe temporary?
-// Must match the actual startup state: the window is created windowed
+// Tracks fullscreen state; must match the initial window creation mode
 bool fullscreen = false;
 
 void processInput(Input &input, Window &window)
@@ -70,17 +68,14 @@ int main()
     // Initialize textures
     Texture texture("assets/textures/atlas.png");
 
-    // Trying chunk rendering!
-    // EDIT 1: Now with noise!
-    // EDIT 2: Multiple chunks!
-    // EDIT 3: Chunk manager!
+    // Generate and register the initial chunks
     ChunkManager chunkManager;
     chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(0, 0, 0), WorldGen::GenerationType::Simplex2D));
     chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(1, 0, 0), WorldGen::GenerationType::Simplex2D));
     chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(0, 0, 1), WorldGen::GenerationType::Simplex2D));
     chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(1, 0, 1), WorldGen::GenerationType::Simplex2D));
 
-    // Renderer HashMap
+    // One GPU renderer per chunk, keyed by chunk position
     std::unordered_map<glm::ivec3, std::unique_ptr<ChunkRenderer>, IVec3Hash> chunkRenderers;
 
     // Range based for to iterate through every loaded chunk
@@ -92,14 +87,10 @@ int main()
         chunkRenderers[position]->updateMesh(chunkMesh);
     }
 
-    // Set VSync on
     window.setVSync(true);
 
+    // Enable depth testing
     glEnable(GL_DEPTH_TEST);
-
-    // Debug
-    std::cout << "DEBUG: Window width is " << window.getWidth() << ".\n";
-    std::cout << "DEBUG: Window height is " << window.getHeight() << ".\n";
 
     // Send static matrices and uniforms
     // Chunks only translate, so the normal matrix stays identity for all of them
@@ -119,7 +110,7 @@ int main()
         float fps = timer.update();
         showFPS(window, fps, true);
 
-        // Update vectors
+        // Update camera from input
         camera.update(input, timer.getDeltaTime());
 
         // Clear Buffer Bit and Depth Bit
@@ -130,7 +121,6 @@ int main()
         // Exit program and fullscreen (temporary solution)
         processInput(input, window);
 
-        // Use shader program to draw cube
         shader.bind();
 
         // Send non-static matrices and uniforms
@@ -145,7 +135,6 @@ int main()
         shader.setMat4("projection", projection);
 
         // Draw each chunk at its world position
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         texture.bind(0);
         shader.setInt("texture1", 0);
         for (const auto &[position, renderer] : chunkRenderers)
