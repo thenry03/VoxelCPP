@@ -2,6 +2,8 @@
 
 #include "Chunk.hpp"
 
+#include <glm/glm.hpp>
+
 #include <cstdint>
 
 // --- World generation ---

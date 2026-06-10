@@ -22,6 +22,9 @@
 #include <string>
 #include <unordered_map>
 
+// Temporary
+constexpr int NUMBER_OF_ITERATIONS = 8;
+
 // Tracks fullscreen state; must match the initial window creation mode
 bool fullscreen = false;
 
@@ -70,22 +73,13 @@ int main()
 
     // Generate and register the initial chunks
     ChunkManager chunkManager;
-    chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(0, 0, 0), WorldGen::GenerationType::Simplex2D));
-    chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(1, 0, 0), WorldGen::GenerationType::Simplex2D));
-    chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(0, 0, 1), WorldGen::GenerationType::Simplex2D));
-    chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(1, 0, 1), WorldGen::GenerationType::Simplex2D));
+    chunkManager.requestChunk(glm::ivec3(0, 0, 0));
+    for (int x = -NUMBER_OF_ITERATIONS; x < NUMBER_OF_ITERATIONS; x++)
+        for (int z = -NUMBER_OF_ITERATIONS; z < NUMBER_OF_ITERATIONS; z++)
+            chunkManager.requestChunk(glm::ivec3(x, 0, z));
 
     // One GPU renderer per chunk, keyed by chunk position
     std::unordered_map<glm::ivec3, std::unique_ptr<ChunkRenderer>, IVec3Hash> chunkRenderers;
-
-    // Range based for to iterate through every loaded chunk
-    for (const auto &[position, chunk] : chunkManager)
-    {
-        // Mesh chunk and update mesh
-        ChunkMesh chunkMesh = ChunkMesher::generateCulledMesh(chunk, chunkManager);
-        chunkRenderers[position] = std::make_unique<ChunkRenderer>();
-        chunkRenderers[position]->updateMesh(chunkMesh);
-    }
 
     window.setVSync(true);
 
@@ -101,6 +95,7 @@ int main()
                          static_cast<int>(Config::World::CHUNK_HEIGHT),
                          static_cast<int>(Config::World::CHUNK_DEPTH));
 
+    // GAME LOOP
     while (!window.shouldClose())
     {
         // Process all pending events
@@ -133,6 +128,15 @@ int main()
         shader.setMat3("normalMatrix", normalMatrix);
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
+
+        // Upload ready meshes to GPU
+        for (auto &[position, mesh] : chunkManager.consumeReadyMeshes())
+        {
+            if (chunkRenderers.find(position) == chunkRenderers.end())
+                // If ChunkRenderer doesn't exist for given position, create it
+                chunkRenderers[position] = std::make_unique<ChunkRenderer>();
+            chunkRenderers[position]->updateMesh(mesh);
+        }
 
         // Draw each chunk at its world position
         texture.bind(0);

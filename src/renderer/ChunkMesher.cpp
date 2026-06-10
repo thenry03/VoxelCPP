@@ -153,7 +153,7 @@ ChunkMesh ChunkMesher::generateDumbMesh(const Chunk &chunk)
 }
 
 // Face culling (draws)
-ChunkMesh ChunkMesher::generateCulledMesh(const Chunk &chunk, const ChunkManager &chunkManager)
+ChunkMesh ChunkMesher::generateCulledMesh(const ChunkNeighbourhood &neighbourhood)
 {
     ChunkMesh culledMesh;
     // Same philosophy
@@ -161,7 +161,7 @@ ChunkMesh ChunkMesher::generateCulledMesh(const Chunk &chunk, const ChunkManager
         for (int z = 0; z < static_cast<int>(Config::World::CHUNK_DEPTH); z++)
             for (int x = 0; x < static_cast<int>(Config::World::CHUNK_WIDTH); x++)
             {
-                uint8_t blockID = chunk.getBlock(x, y, z);
+                uint8_t blockID = neighbourhood.center.getBlock(x, y, z);
                 if (blockID == 0)
                     continue;
                 for (const Face &face : cubeFaces)
@@ -184,7 +184,7 @@ ChunkMesh ChunkMesher::generateCulledMesh(const Chunk &chunk, const ChunkManager
                     if (outsideX || outsideY || outsideZ)
                     {
                         // Check which neighbour and which local coords
-                        glm::ivec3 neighbourChunkPosition = chunk.getPosition() + face.neighbourOffset;
+                        glm::ivec3 neighbourChunkPosition = neighbourhood.center.getPosition() + face.neighbourOffset;
 
                         // Calculate local block coordinates
                         int localX = ((nx %
@@ -201,16 +201,16 @@ ChunkMesh ChunkMesher::generateCulledMesh(const Chunk &chunk, const ChunkManager
                                      static_cast<int>(Config::World::CHUNK_HEIGHT);
 
                         // Chunk manager handles outside local chunk faces
-                        if (chunkManager.hasChunk(neighbourChunkPosition))
-                            neighbourID = chunkManager.getChunk(neighbourChunkPosition).getBlock(localX, localY, localZ);
+                        auto it = neighbourhood.neighbours.find(neighbourChunkPosition);
+                        if (it != neighbourhood.neighbours.end())
+                            neighbourID = it->second.getBlock(localX, localY, localZ);
                         else
                             // Chunk not loaded, treat as air
                             neighbourID = 0;
                     }
                     else
                         // Block is in the same chunk
-                        neighbourID = chunk.getBlock(nx, ny, nz);
-                    
+                        neighbourID = neighbourhood.center.getBlock(nx, ny, nz);
 
                     // If the neighbouring face is solid:
                     // - This face cannot be seen
