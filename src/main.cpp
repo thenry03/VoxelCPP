@@ -7,10 +7,10 @@
 #include "renderer/ChunkRenderer.hpp"
 #include "renderer/Shader.hpp"
 #include "renderer/Texture.hpp"
+#include "scene/ChunkMeshingSystem.hpp"
 #include "world/Block.hpp"
 #include "world/Chunk.hpp"
 #include "world/ChunkManager.hpp"
-#include "world/WorldGen.hpp"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -73,10 +73,22 @@ int main()
 
     // Generate and register the initial chunks
     ChunkManager chunkManager;
-    chunkManager.requestChunk(glm::ivec3(0, 0, 0));
     for (int x = -NUMBER_OF_ITERATIONS; x < NUMBER_OF_ITERATIONS; x++)
         for (int z = -NUMBER_OF_ITERATIONS; z < NUMBER_OF_ITERATIONS; z++)
             chunkManager.requestChunk(glm::ivec3(x, 0, z));
+
+    // Create the chunk meshing system and assign its manager
+    ChunkMeshingSystem chunkMeshingSystem(chunkManager);
+
+    // The manager must notify the meshing system when a chunk is ready for meshing
+    chunkManager.setOnChunkGenerated(
+        [&chunkMeshingSystem](const glm::ivec3 &position)
+        { chunkMeshingSystem.enqueue(position); });
+
+    // The manager must ask the meshing system to re-mesh neighbours when a chunk turns Ready
+    chunkManager.setOnChunkReady(
+        [&chunkMeshingSystem](const glm::ivec3 &position)
+        { chunkMeshingSystem.enqueue(position); });
 
     // One GPU renderer per chunk, keyed by chunk position
     std::unordered_map<glm::ivec3, std::unique_ptr<ChunkRenderer>, IVec3Hash> chunkRenderers;
@@ -130,7 +142,7 @@ int main()
         shader.setMat4("projection", projection);
 
         // Upload ready meshes to GPU
-        for (auto &[position, mesh] : chunkManager.consumeReadyMeshes())
+        for (auto &[position, mesh] : chunkMeshingSystem.consumeReadyMeshes())
         {
             if (chunkRenderers.find(position) == chunkRenderers.end())
                 // If ChunkRenderer doesn't exist for given position, create it
@@ -157,6 +169,11 @@ int main()
         // Reset mouse deltas
         input.update();
     }
+
+    // Stop the generation worker first so it can no longer fire the callback
+    // into the meshing system, then stop the meshing worker
+    chunkManager.stop();
+    chunkMeshingSystem.stop();
 
     return EXIT_SUCCESS;
 }

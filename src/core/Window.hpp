@@ -25,9 +25,11 @@ public:
     int  getWidth()    const;
     int  getHeight()   const;
 
-    // --- Native pointer access ---
+    // --- Native handle access ---
     GLFWwindow *getNativeWindow() const;
     EventDispatcher& getEventDispatcher();
+
+    // --- Fullscreen ---
     void fullscreenOn();
     void fullscreenOff(int width, int height);
 

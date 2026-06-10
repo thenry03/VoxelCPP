@@ -59,7 +59,7 @@ namespace Config
         constexpr float PLAINS_NOISE_FREQUENCY = 0.012f;     // Frequent ondulations
         constexpr float PLAINS_TERRAIN_AMPLITUDE = 0.02f;    // Height variation range factor
         constexpr float MOUNTAINS_NOISE_FREQUENCY = 0.005f;  // Less frequent ondulations
-        constexpr float MOUNTAIN_TERRAIN_AMPLITUDE = 0.312f; // Height variation range factor
+        constexpr float MOUNTAINS_TERRAIN_AMPLITUDE = 0.312f; // Height variation range factor
         constexpr int TERRAIN_DIRT_DEPTH = 3;                // Dirt layers between grass and stone
     }
 }
