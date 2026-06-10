@@ -17,7 +17,8 @@ public:
     // --- Update ---
     void update(const Input &input, float deltaTime);
 
-    // --- Matrix query ---
+    // --- Queries ---
+    glm::vec3 getPlayerPosition() const;
     glm::mat4 getViewMatrix() const;
 
 private:

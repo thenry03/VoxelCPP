@@ -71,12 +71,11 @@ int main()
     // Initialize textures
     Texture texture("assets/textures/atlas.png");
 
-    // Generate and register the initial chunks
+    // ==========================================
+    // COMPLETE CHUNK SYSTEM
+    // ==========================================
+    // Chunk manager: changes states, notifies meshing
     ChunkManager chunkManager;
-    for (int x = -NUMBER_OF_ITERATIONS; x < NUMBER_OF_ITERATIONS; x++)
-        for (int z = -NUMBER_OF_ITERATIONS; z < NUMBER_OF_ITERATIONS; z++)
-            chunkManager.requestChunk(glm::ivec3(x, 0, z));
-
     // Create the chunk meshing system and assign its manager
     ChunkMeshingSystem chunkMeshingSystem(chunkManager);
 
@@ -92,6 +91,11 @@ int main()
 
     // One GPU renderer per chunk, keyed by chunk position
     std::unordered_map<glm::ivec3, std::unique_ptr<ChunkRenderer>, IVec3Hash> chunkRenderers;
+
+    // The manager must ask the render system to unload unseen chunks
+    chunkManager.setOnChunkUnloaded(
+        [&chunkRenderers](const glm::ivec3 &position)
+        { chunkRenderers.erase(position); });
 
     window.setVSync(true);
 
@@ -141,9 +145,17 @@ int main()
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
 
+        // Before consuming meshes, update list of observable chunks
+        chunkManager.update(camera.getPlayerPosition(),
+                            static_cast<int>(Config::World::RENDER_DISTANCE));
+
         // Upload ready meshes to GPU
         for (auto &[position, mesh] : chunkMeshingSystem.consumeReadyMeshes())
         {
+            // Skip meshes for chunks unloaded while queued, else we resurrect an
+            // orphan renderer the unload pass can no longer reach
+            if (!chunkManager.hasChunk(position))
+                continue;
             if (chunkRenderers.find(position) == chunkRenderers.end())
                 // If ChunkRenderer doesn't exist for given position, create it
                 chunkRenderers[position] = std::make_unique<ChunkRenderer>();

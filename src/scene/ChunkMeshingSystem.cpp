@@ -1,5 +1,6 @@
 #include "ChunkMeshingSystem.hpp"
 
+#include <optional>
 #include <utility>
 
 // ==========================================
@@ -105,13 +106,14 @@ void ChunkMeshingSystem::workerLoop()
         // =========================
         // 3. MESHING
         // =========================
-        // Must survive until after delivery
-        ChunkMesh chunkMesh;
+        // The chunk may have been unloaded; skip it if the snapshot is empty
+        std::optional<ChunkNeighbourhood> chunkNeighbourhood =
+            m_chunkManager.snapshotNeighbourhood(chunkPosition);
+        if (!chunkNeighbourhood)
+            continue;
 
-        // Build neighbourhood and generate the culled mesh
-        ChunkNeighbourhood chunkNeighbourhood = m_chunkManager
-                                                    .snapshotNeighbourhood(chunkPosition);
-        chunkMesh = ChunkMesher::generateCulledMesh(chunkNeighbourhood);
+        // Must survive until after delivery
+        ChunkMesh chunkMesh = ChunkMesher::generateCulledMesh(*chunkNeighbourhood);
 
         // =========================
         // 4. DELIVERY
