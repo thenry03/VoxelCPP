@@ -1,18 +1,18 @@
 #pragma once
 
-#include "../renderer/ChunkMesher.hpp"
 #include "Chunk.hpp"
+#include "ChunkNeighbourhood.hpp"
 
 #include <glm/glm.hpp>
 
 #include <atomic>
 #include <condition_variable>
+#include <cstdint>
+#include <functional>
 #include <mutex>
 #include <queue>
 #include <thread>
 #include <unordered_map>
-#include <utility>
-#include <vector>
 
 // --- Lifecycle States ---
 // The 5 lifecycle states
@@ -20,6 +20,7 @@ enum class ChunkState : uint8_t
 {
     Requested,  // Generation requested
     Generating, // Noise phase
+    Generated,  // Ready to be meshed
     Meshing,    // Meshing and culling
     Ready,      // Ready to render
     Unloading   // Unload pending
@@ -35,23 +36,33 @@ public:
     {
         Chunk chunk;
         ChunkState state;
+        bool hasNotifiedReady = false;
     };
 
     // --- Lifecycle ---
     ChunkManager();
     ~ChunkManager();
+    // Stops the worker thread; called before destruction to avoid teardown races
+    void stop();
 
     // --- Control ---
     // Called each frame on the main thread
     void update();
-    // Consume meshed chunks from queue and change chunk state to Ready
-    // Returns the ready meshes so the caller can upload them to the GPU
-    std::vector<std::pair<glm::ivec3, ChunkMesh>> consumeReadyMeshes();
+
+    // --- Setup ---
+    // Registers the callback fired when a chunk finishes generation
+    void setOnChunkGenerated(std::function<void(const glm::ivec3 &)> callback);
+    void setOnChunkReady(std::function<void(const glm::ivec3 &)> callback);
 
     // --- Chunk operations ---
-    // void addChunk(Chunk chunk);
+    // Listed in the order a chunk travels through its lifecycle
     // Changes chunk state to Requested
     void requestChunk(const glm::ivec3 &chunkPosition);
+    void markMeshing(const glm::ivec3 &chunkPosition);
+    void markReady(const glm::ivec3 &chunkPosition);
+    ChunkNeighbourhood snapshotNeighbourhood(const glm::ivec3 &chunkPosition) const;
+
+    // --- Queries ---
     const Chunk &getChunk(const glm::ivec3 &chunkPosition) const;
     bool hasChunk(const glm::ivec3 &chunkPosition) const;
 
@@ -68,10 +79,9 @@ private:
     std::queue<glm::ivec3> m_requestedQueue;
     std::mutex m_requestedQueueMutex;
     std::condition_variable m_requestCV;
-    // Meshed chunks queue
-    std::queue<std::pair<glm::ivec3, ChunkMesh>> m_meshedQueue;
-    std::mutex m_meshedQueueMutex;
     // Thread control
     std::thread m_workerThread;
     std::atomic<bool> m_running{false};
+    std::function<void(const glm::ivec3 &)> m_onChunkGenerated;
+    std::function<void(const glm::ivec3 &)> m_onChunkReady;
 };

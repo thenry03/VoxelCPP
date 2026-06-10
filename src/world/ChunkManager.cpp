@@ -17,16 +17,22 @@ ChunkManager::ChunkManager()
 
 ChunkManager::~ChunkManager()
 {
+    stop();
+}
+
+void ChunkManager::stop()
+{
+    // Idempotent: called explicitly from main and again from the destructor
     // 1. Set atomic flag to false
     // If not, worker thread might access non-existent variables
     m_running = false;
     // 2. Wake up worker
     // It might be blocked waiting for the condition
-    // If not, the destructor method will freeze forever,
-    // waiting for a blocked thread
+    // If not, the join below would freeze forever waiting for a blocked thread
     m_requestCV.notify_one();
 
-    // Wait for the thread to finish
+    // 3. Wait for the thread to finish
+    // After the first join joinable() is false, so a second stop() is a no-op
     if (m_workerThread.joinable())
         m_workerThread.join();
 }
@@ -34,6 +40,16 @@ ChunkManager::~ChunkManager()
 // ==========================================
 // 2. PUBLIC METHODS
 // ==========================================
+void ChunkManager::setOnChunkGenerated(std::function<void(const glm::ivec3 &)> callback)
+{
+    m_onChunkGenerated = std::move(callback);
+}
+
+void ChunkManager::setOnChunkReady(std::function<void(const glm::ivec3 &)> callback)
+{
+    m_onChunkReady = std::move(callback);
+}
+
 void ChunkManager::requestChunk(const glm::ivec3 &chunkPosition)
 {
     // Grab both locks at once, deadlock-free
@@ -54,34 +70,85 @@ void ChunkManager::requestChunk(const glm::ivec3 &chunkPosition)
     m_requestCV.notify_one();
 }
 
-std::vector<std::pair<glm::ivec3, ChunkMesh>> ChunkManager::consumeReadyMeshes()
+void ChunkManager::markMeshing(const glm::ivec3 &chunkPosition)
 {
-    std::vector<std::pair<glm::ivec3, ChunkMesh>> ready;
-
-    // 1. Empty queue to a local (move, not copy)
-    {
-        std::lock_guard<std::mutex> meshLock(m_meshedQueueMutex);
-        while (!m_meshedQueue.empty())
-        {
-            // Push to the ready vector the front element of the queue
-            ready.push_back(std::move(m_meshedQueue.front()));
-            // Remove said element from the queue
-            m_meshedQueue.pop();
-        }
-    }
-    // 2. Set Ready state in the database
     {
         std::lock_guard<std::mutex> dbLock(m_databaseMutex);
-        for (const auto &[position, mesh] : ready)
+        // Access database and mark chunk as Meshing
+        m_chunkDatabase.at(chunkPosition).state = ChunkState::Meshing;
+    }
+}
+
+void ChunkManager::markReady(const glm::ivec3 &chunkPosition)
+{
+    // 6 possible directions
+    static const std::array<glm::ivec3, 6> directions = {{{1, 0, 0},
+                                                          {-1, 0, 0},
+                                                          {0, 1, 0},
+                                                          {0, -1, 0},
+                                                          {0, 0, 1},
+                                                          {0, 0, -1}}};
+
+    // Collect neighbours to re-enqueue outside the lock
+    std::vector<glm::ivec3> toRemesh;
+    {
+        std::lock_guard<std::mutex> dbLock(m_databaseMutex);
+        // Acess database and set state to Ready
+        auto &chunkEntry = m_chunkDatabase.at(chunkPosition);
+        chunkEntry.state = ChunkState::Ready;
+
+        // Re-mesh neighbours only the first time this chunk becomes ready
+        if (!chunkEntry.hasNotifiedReady)
         {
-            auto it = m_chunkDatabase.find(position);
-            // Set to Ready if it exists and is in Meshing state
-            if (it != m_chunkDatabase.end() && it->second.state == ChunkState::Meshing)
-                it->second.state = ChunkState::Ready;
+            chunkEntry.hasNotifiedReady = true;
+            // Iterate through all directions again to cull more faces
+            for (const auto &dir : directions)
+            {
+                glm::ivec3 neighbourPosition = chunkPosition + dir;
+                auto it = m_chunkDatabase.find(neighbourPosition);
+                if (it != m_chunkDatabase.end() && it->second.state == ChunkState::Ready)
+                    toRemesh.push_back(neighbourPosition);
+            }
         }
     }
 
-    return ready;
+    // Fire callbacks outside the lock
+    if (m_onChunkReady)
+        for (const auto &pos : toRemesh)
+            m_onChunkReady(pos);
+}
+
+ChunkNeighbourhood ChunkManager::snapshotNeighbourhood(const glm::ivec3 &chunkPosition) const
+{
+    ChunkNeighbourhood snapshot = [this, chunkPosition]() -> ChunkNeighbourhood
+    {
+        std::lock_guard<std::mutex> dbLock(m_databaseMutex);
+
+        // Access database yet again
+        ChunkNeighbourhood result{m_chunkDatabase.at(chunkPosition).chunk, {}};
+
+        // 6 possible directions
+        static const std::array<glm::ivec3, 6> directions = {{{1, 0, 0},
+                                                              {-1, 0, 0},
+                                                              {0, 1, 0},
+                                                              {0, -1, 0},
+                                                              {0, 0, 1},
+                                                              {0, 0, -1}}};
+
+        // Iterate through directions and add neighbours
+        for (const auto &dir : directions)
+        {
+            glm::ivec3 neighbourPosition = chunkPosition + dir;
+            auto it = m_chunkDatabase.find(neighbourPosition);
+            // If neighbour exists in investigated direction and is Ready, add it
+            if (it != m_chunkDatabase.end() && it->second.state == ChunkState::Ready)
+                result.neighbours.emplace(neighbourPosition, it->second.chunk);
+        }
+
+        return result;
+    }();
+
+    return snapshot;
 }
 
 const Chunk &ChunkManager::getChunk(const glm::ivec3 &position) const
@@ -142,58 +209,14 @@ void ChunkManager::workerLoop()
         // Step 3
         {
             std::lock_guard<std::mutex> dbLock(m_databaseMutex);
-            // Access database again to insert newly created chunk and change state to Meshing
+            // Access database again to insert newly created chunk and change state to Generated
             m_chunkDatabase.at(chunkPosition).chunk = std::move(newChunk);
-            m_chunkDatabase.at(chunkPosition).state = ChunkState::Meshing;
+            m_chunkDatabase.at(chunkPosition).state = ChunkState::Generated;
         }
 
-        // =========================
-        // 3. MESHING
-        // =========================
-        // Must survive until after delivery
-        ChunkMesh chunkMesh;
-
-        // Step 1
-        ChunkNeighbourhood snapshot = [this, &chunkPosition]() -> ChunkNeighbourhood
-        {
-            std::lock_guard<std::mutex> dbLock(m_databaseMutex);
-
-            // Access database yet again
-            ChunkNeighbourhood result{m_chunkDatabase.at(chunkPosition).chunk, {}};
-
-            // 6 possible directions
-            static const std::array<glm::ivec3, 6> directions = {{{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}}};
-
-            // Iterate through directions and add neighbours
-            for (const auto &dir : directions)
-            {
-                glm::ivec3 neighbourPos = chunkPosition + dir;
-                auto it = m_chunkDatabase.find(neighbourPos);
-                // If neighbour exists in investigated direction and it is Ready, add it
-                if (it != m_chunkDatabase.end() && it->second.state == ChunkState::Ready)
-                    result.neighbours.emplace(neighbourPos, it->second.chunk);
-
-                // TODO (technical debt): chunks meshed before a neighbour exists keep
-                // their boundary faces drawn, leaving hidden geometry at the seam
-                // Fix: when a chunk turns Ready (in update()), re-enqueue its existing
-                // neighbours for meshing so they recompute their borders
-                // Cheaper still: gate meshing on neighbours being generated, not Ready
-            }
-
-            return result;
-        }();
-
-        // Step 2
-        // Mesh AFTER unlocking (much more efficient)
-        chunkMesh = ChunkMesher::generateCulledMesh(snapshot);
-
-        // =========================
-        // 4. DELIVERY
-        // =========================
-        {
-            std::lock_guard<std::mutex> meshLock(m_meshedQueueMutex);
-            // Access meshed queue to push a new meshed chunk
-            m_meshedQueue.push({chunkPosition, chunkMesh});
-        }
+        // Step 4
+        // Notify meshing system without knowing who it is
+        if (m_onChunkGenerated)
+            m_onChunkGenerated(chunkPosition);
     }
 }
