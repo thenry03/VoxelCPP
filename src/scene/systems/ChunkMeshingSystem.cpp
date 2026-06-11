@@ -72,7 +72,7 @@ std::vector<std::pair<glm::ivec3, ChunkMesh>> ChunkMeshingSystem::consumeReadyMe
 }
 
 // ==========================================
-// 3. PRIVATE METHODS
+// 2. PRIVATE METHODS
 // ==========================================
 void ChunkMeshingSystem::workerLoop()
 {

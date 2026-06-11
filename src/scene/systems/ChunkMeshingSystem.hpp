@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../renderer/ChunkMesher.hpp"
-#include "../world/ChunkManager.hpp"
+#include "../../renderer/ChunkMesher.hpp"
+#include "../../world/ChunkManager.hpp"
 
 #include <glm/glm.hpp>
 
