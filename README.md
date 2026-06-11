@@ -5,16 +5,15 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Language: C++17](https://img.shields.io/badge/Language-C%2B%2B17-blue.svg)
 ![OpenGL 3.3](https://img.shields.io/badge/OpenGL-3.3_Core_Profile-red.svg)
-![Version](https://img.shields.io/badge/Version-v0.2.0-orange.svg)
-![Status](https://img.shields.io/badge/Status-Phase_2_Complete-brightgreen.svg)
+![Version](https://img.shields.io/badge/Version-v0.3.0-orange.svg)
+![Status](https://img.shields.io/badge/Status-Phase_3_Complete-brightgreen.svg)
 
 > [Versión en español](README.es.md)
 
 ---
 
-![Terrain overview](docs/screenshots/terrain_01.png)
+<img width="2560" height="1600" alt="release_screenshot_2" src="https://github.com/user-attachments/assets/2ffb9d18-f01a-423e-94f7-37fbbd08e430" />
 
-*Screenshot to be updated after Phase 3.*
 
 ---
 
@@ -36,9 +35,14 @@ The engine includes the following features:
 
 - **Graphics Pipeline:** Complete implementation utilizing the OpenGL 3.3 Core Profile API.
 - **Camera System:** Free-look FPS camera with cursor capture support.
-- **Terrain:** Procedural generation powered by coherent noise (FBm + OpenSimplex2).
+- **Infinite World:** Dynamic chunk loading and unloading based on player position and configurable render distance.
+- **Terrain Generation:** Blended procedural generation with domain warping, continentality map, plains, mountains, beaches, rivers and sea level.
+- **Flora:** Deterministic tree generation across chunk boundaries using a cell-based hash system.
+- **Multithreaded Pipeline:** Chunk generation and mesh building run on dedicated worker threads, keeping the main thread free for rendering.
 - **Chunk Management:** SoA (Structure of Arrays) data layout with strict boundary-checking.
 - **Optimization:** Face culling between adjacent chunks.
+- **Face Shading:** Normal-based per-face lighting for visual depth without a full lighting system.
+- **Visual Sun:** Billboard quad that always faces the camera, rendered at a fixed world position.
 - **Texturing:** Texture Atlas with UV coordinate calculations per block type.
 - **Scene:** 14 distinct block types with extensible ID-based registry.
 - **Memory Architecture:** Strict RAII memory management, leveraging clean encapsulation and strict separation of responsibilities.
@@ -115,9 +119,9 @@ The following table outlines the development phases, current progress, and core 
 | Phase 0 — Environment Setup | ✅ | GLFW + GLAD setup, build system configuration and window initialization. |
 | Phase 1 — Base Pipeline | ✅ | Windowing, shader compilation, camera, input, and delta timer. |
 | Phase 2 — Voxel Engine Core | ✅ | Chunk system, mesher with culling, procedural world generation, Texture Atlas. |
-| Phase 3 — Core Gameplay Mechanics | 🚧 | Chunk height extension, dynamic chunk loading/unloading, infinite world generation, basic environment: mountains and trees. |
-| Phase 4 — Lighting and Environment | ⬜ | Flood-fill lighting, fog and render distance, water, biomes: Forest, Beaches, Desert, Mountains, Granite Mountains. |
-| Phase 5 — Optimization | ⬜ | Bit-packing, Palette Compression, multi-threading. |
+| Phase 3 — Core Gameplay Mechanics | ✅ | Infinite world, advanced procedural generation with domain warping, rivers and beaches, deterministic trees, face shading, visual sun, multithreaded pipeline. |
+| Phase 4 — Lighting and Environment | 🚧 | Flood-fill lighting, fog and render distance, water, biomes: Forest, Beaches, Desert, Mountains, Granite Mountains. |
+| Phase 5 — Optimization | ⬜ | Bit-packing, palette compression, deferred rendering. |
 
 ---
 
@@ -137,6 +141,12 @@ The following table outlines the development phases, current progress, and core 
 - [GLFW](https://www.glfw.org) — Multi-platform windowing and input library.
 - [GLAD](https://glad.dav1d.de) — OpenGL function loader generator.
 - [GLM](https://glm.g-truc.net) — Mathematics library for graphics software based on GLSL specifications.
+
+---
+
+## Documentation Status
+
+The architecture document (`docs/architecture.pdf`) covers the Phase 2 design. It will be updated to reflect the Phase 3 systems — multithreaded chunk pipeline, infinite world, terrain shaper, and flora — in a future revision.
 
 ---
 
