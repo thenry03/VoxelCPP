@@ -127,14 +127,14 @@ int Window::getHeight() const
     return m_height;
 }
 
-void Window::setVSync(bool enabled) const
-{
-    glfwSwapInterval(static_cast<int>(enabled));
-}
-
 GLFWwindow *Window::getNativeWindow() const
 {
     return m_window;
+}
+
+EventDispatcher &Window::getEventDispatcher()
+{
+    return m_eventDispatcher;
 }
 
 void Window::fullscreenOn()
@@ -159,9 +159,9 @@ void Window::fullscreenOff(int width, int height)
                          GLFW_DONT_CARE);
 }
 
-EventDispatcher &Window::getEventDispatcher()
+void Window::setVSync(bool enabled) const
 {
-    return m_eventDispatcher;
+    glfwSwapInterval(static_cast<int>(enabled));
 }
 
 void Window::swapBuffers() const

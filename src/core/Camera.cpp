@@ -60,6 +60,11 @@ void Camera::update(const Input &input, float deltaTime)
     m_front = glm::normalize(m_front);
 }
 
+glm::vec3 Camera::getPlayerPosition() const
+{
+    return m_position;
+}
+
 glm::mat4 Camera::getViewMatrix() const
 {
     // Camera position, camera direction and up vector

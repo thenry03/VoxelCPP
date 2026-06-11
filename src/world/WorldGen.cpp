@@ -5,8 +5,6 @@
 
 #include <FastNoiseLite.h>
 
-#include <iostream>
-
 // ==========================================
 // 1. HELPER METHODS
 // ==========================================
@@ -33,7 +31,7 @@ namespace
         // Mid-level of the terrain, as a fraction of the chunk height
         const float baseHeight = Config::World::TERRAIN_BASE * Config::World::CHUNK_HEIGHT;
         // How far the surface rises and falls around the base height
-        const float amplitude = Config::World::PLAINS_TERRAIN_AMPLITUDE * Config::World::CHUNK_HEIGHT;
+        const float amplitude = Config::World::MOUNTAINS_TERRAIN_AMPLITUDE * Config::World::CHUNK_HEIGHT;
 
         // Chunk position does not change, out of the loop for efficiency
         glm::ivec3 chunkPosition = chunk.getPosition();
@@ -45,8 +43,6 @@ namespace
                 // World coords so the same seed doesn't produce the same heightmap on every chunk
                 float worldX = static_cast<float>(chunkPosition.x * static_cast<int>(Config::World::CHUNK_WIDTH) + x);
                 float worldZ = static_cast<float>(chunkPosition.z * static_cast<int>(Config::World::CHUNK_DEPTH) + z);
-
-                if (x == 0 && z == 0) std::cout << "worldX: " << worldX << ", worldZ: " << worldZ << std::endl;
 
                 // Sample 2D noise using horizontal X and Z coords
                 float noiseValue = noise.GetNoise(worldX, worldZ);

@@ -15,7 +15,7 @@ namespace Config
 
     namespace Camera
     {
-        constexpr float MOVE_SPEED = 20.0f;
+        constexpr float MOVE_SPEED = 50.0f;
         constexpr float MOUSE_SENSITIVITY = 0.075f;
         inline const glm::vec3 START_POSITION = glm::vec3(0.0f, 140.0f, 5.0f);
         constexpr float YAW = -90.0f;
@@ -50,16 +50,18 @@ namespace Config
         constexpr std::size_t CHUNK_HEIGHT = 256;
         constexpr std::size_t CHUNK_VOLUME = CHUNK_WIDTH * CHUNK_DEPTH * CHUNK_HEIGHT;
 
+        constexpr unsigned int RENDER_DISTANCE = 16;
+
         // WorldGen
         constexpr int NOISE_SEED = static_cast<int>(10210511411511632ULL % 2147483647ULL);
         constexpr int NOISE_OCTAVES = 4;
         // Terrain generation
         constexpr float TERRAIN_BASE = 0.375f; // Mean terrain height factor
         // Plains
-        constexpr float PLAINS_NOISE_FREQUENCY = 0.012f;     // Frequent ondulations
-        constexpr float PLAINS_TERRAIN_AMPLITUDE = 0.02f;    // Height variation range factor
-        constexpr float MOUNTAINS_NOISE_FREQUENCY = 0.005f;  // Less frequent ondulations
-        constexpr float MOUNTAIN_TERRAIN_AMPLITUDE = 0.312f; // Height variation range factor
-        constexpr int TERRAIN_DIRT_DEPTH = 3;                // Dirt layers between grass and stone
+        constexpr float PLAINS_NOISE_FREQUENCY = 0.012f;      // Frequent ondulations
+        constexpr float PLAINS_TERRAIN_AMPLITUDE = 0.02f;     // Height variation range factor
+        constexpr float MOUNTAINS_NOISE_FREQUENCY = 0.005f;   // Less frequent ondulations
+        constexpr float MOUNTAINS_TERRAIN_AMPLITUDE = 0.312f; // Height variation range factor
+        constexpr int TERRAIN_DIRT_DEPTH = 3;                 // Dirt layers between grass and stone
     }
 }

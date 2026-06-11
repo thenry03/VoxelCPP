@@ -18,8 +18,7 @@ public:
     Shader &operator=(const Shader &) = delete;
 
     // --- Activation ---
-    void bind()   const;
-    void unbind() const;
+    void bind() const;
 
     // --- Uniforms ---
     void setInt(const std::string &name, int value)               const;
