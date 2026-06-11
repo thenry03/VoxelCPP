@@ -1,4 +1,5 @@
 #include "Camera.hpp"
+#include "Input.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -58,6 +59,11 @@ void Camera::update(const Input &input, float deltaTime)
     m_front.y = sin(glm::radians(m_pitch));
     m_front.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
     m_front = glm::normalize(m_front);
+}
+
+glm::vec3 Camera::getPlayerPosition() const
+{
+    return m_position;
 }
 
 glm::mat4 Camera::getViewMatrix() const

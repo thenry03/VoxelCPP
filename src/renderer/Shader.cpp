@@ -131,11 +131,6 @@ void Shader::bind() const
     glUseProgram(m_programID);
 }
 
-void Shader::unbind() const
-{
-    glUseProgram(0);
-}
-
 void Shader::setInt(const std::string &name, int value) const
 {
     GLint location = getUniformLocation(name);

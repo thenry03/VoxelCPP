@@ -1,6 +1,8 @@
 #pragma once
 
-#include "Chunk.hpp"
+#include "../chunks/Chunk.hpp"
+
+#include <glm/glm.hpp>
 
 #include <cstdint>
 
@@ -10,8 +12,9 @@ namespace WorldGen
     // Define the generation types
     enum class GenerationType : uint8_t
     {
-        Simplex2D,
-        Simplex3D
+        SINGLE_2D_NOISE,
+        BLENDED_2D_NOISE,
+        TODO
     };
 
     // Signature accepts generation type

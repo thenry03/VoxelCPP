@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../world/Chunk.hpp"
-#include "../world/ChunkManager.hpp"
+#include "../world/chunks/Chunk.hpp"
+#include "../world/chunks/ChunkNeighbourhood.hpp"
 #include "Vertex.hpp"
 
 #include <vector>
@@ -24,5 +24,5 @@ namespace ChunkMesher
     ChunkMesh generateDumbMesh(const Chunk &chunk);
     // Culled mesh: skips faces shared with solid neighbours
     // Requires ChunkManager to resolve faces at chunk boundaries
-    ChunkMesh generateCulledMesh(const Chunk &chunk, const ChunkManager &chunkManager);
+    ChunkMesh generateCulledMesh(const ChunkNeighbourhood &neighbourhood);
 }

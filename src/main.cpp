@@ -6,11 +6,13 @@
 #include "renderer/ChunkMesher.hpp"
 #include "renderer/ChunkRenderer.hpp"
 #include "renderer/Shader.hpp"
+#include "renderer/SunRenderer.hpp"
 #include "renderer/Texture.hpp"
-#include "world/Block.hpp"
-#include "world/Chunk.hpp"
-#include "world/ChunkManager.hpp"
-#include "world/WorldGen.hpp"
+#include "scene/actors/Sun.hpp"
+#include "scene/systems/ChunkMeshingSystem.hpp"
+#include "world/blocks/Block.hpp"
+#include "world/chunks/Chunk.hpp"
+#include "world/chunks/ChunkManager.hpp"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -21,6 +23,9 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+
+// Temporary
+constexpr int NUMBER_OF_ITERATIONS = 8;
 
 // Tracks fullscreen state; must match the initial window creation mode
 bool fullscreen = false;
@@ -68,24 +73,31 @@ int main()
     // Initialize textures
     Texture texture("assets/textures/atlas.png");
 
-    // Generate and register the initial chunks
+    // ==========================================
+    // COMPLETE CHUNK SYSTEM
+    // ==========================================
+    // Chunk manager: changes states, notifies meshing
     ChunkManager chunkManager;
-    chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(0, 0, 0), WorldGen::GenerationType::Simplex2D));
-    chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(1, 0, 0), WorldGen::GenerationType::Simplex2D));
-    chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(0, 0, 1), WorldGen::GenerationType::Simplex2D));
-    chunkManager.addChunk(WorldGen::generateChunk(glm::ivec3(1, 0, 1), WorldGen::GenerationType::Simplex2D));
+    // Create the chunk meshing system and assign its manager
+    ChunkMeshingSystem chunkMeshingSystem(chunkManager);
+
+    // The manager must notify the meshing system when a chunk is ready for meshing
+    chunkManager.setOnChunkGenerated(
+        [&chunkMeshingSystem](const glm::ivec3 &position)
+        { chunkMeshingSystem.enqueue(position); });
+
+    // The manager must ask the meshing system to re-mesh neighbours when a chunk turns Ready
+    chunkManager.setOnChunkReady(
+        [&chunkMeshingSystem](const glm::ivec3 &position)
+        { chunkMeshingSystem.enqueue(position); });
 
     // One GPU renderer per chunk, keyed by chunk position
     std::unordered_map<glm::ivec3, std::unique_ptr<ChunkRenderer>, IVec3Hash> chunkRenderers;
 
-    // Range based for to iterate through every loaded chunk
-    for (const auto &[position, chunk] : chunkManager)
-    {
-        // Mesh chunk and update mesh
-        ChunkMesh chunkMesh = ChunkMesher::generateCulledMesh(chunk, chunkManager);
-        chunkRenderers[position] = std::make_unique<ChunkRenderer>();
-        chunkRenderers[position]->updateMesh(chunkMesh);
-    }
+    // The manager must ask the render system to unload unseen chunks
+    chunkManager.setOnChunkUnloaded(
+        [&chunkRenderers](const glm::ivec3 &position)
+        { chunkRenderers.erase(position); });
 
     window.setVSync(true);
 
@@ -101,6 +113,11 @@ int main()
                          static_cast<int>(Config::World::CHUNK_HEIGHT),
                          static_cast<int>(Config::World::CHUNK_DEPTH));
 
+    // Create Sun and its renderer
+    Sun sun;
+    SunRenderer sunRenderer;
+
+    // GAME LOOP
     while (!window.shouldClose())
     {
         // Process all pending events
@@ -134,6 +151,23 @@ int main()
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
 
+        // Before consuming meshes, update list of observable chunks
+        chunkManager.update(camera.getPlayerPosition(),
+                            static_cast<int>(Config::World::RENDER_DISTANCE));
+
+        // Upload ready meshes to GPU
+        for (auto &[position, mesh] : chunkMeshingSystem.consumeReadyMeshes())
+        {
+            // Skip meshes for chunks unloaded while queued, else we resurrect an
+            // orphan renderer the unload pass can no longer reach
+            if (!chunkManager.hasChunk(position))
+                continue;
+            if (chunkRenderers.find(position) == chunkRenderers.end())
+                // If ChunkRenderer doesn't exist for given position, create it
+                chunkRenderers[position] = std::make_unique<ChunkRenderer>();
+            chunkRenderers[position]->updateMesh(mesh);
+        }
+
         // Draw each chunk at its world position
         texture.bind(0);
         shader.setInt("texture1", 0);
@@ -146,6 +180,17 @@ int main()
             renderer->draw();
         }
 
+        // Draw Sun
+        // Treat its position as a sky direction anchored to the camera, so it
+        // keeps its apparent place and always sits inside the far plane
+        glm::vec3 sunDirection = glm::normalize(sun.getSunPosition());
+        glm::vec3 sunWorldPosition = camera.getPlayerPosition() + sunDirection * 1500.0f;
+        sunRenderer.draw(sunWorldPosition,
+                         sun.getSunColor(),
+                         sun.getSunSize(),
+                         view,
+                         projection);
+
         // Prevent flickering
         window.swapBuffers();
 
@@ -153,6 +198,11 @@ int main()
         // Reset mouse deltas
         input.update();
     }
+
+    // Stop the generation worker first so it can no longer fire the callback
+    // into the meshing system, then stop the meshing worker
+    chunkManager.stop();
+    chunkMeshingSystem.stop();
 
     return EXIT_SUCCESS;
 }

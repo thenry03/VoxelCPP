@@ -1,5 +1,4 @@
 #include "Input.hpp"
-
 #include "Constants.hpp"
 #include "EventDispatcher.hpp"
 #include "Window.hpp"

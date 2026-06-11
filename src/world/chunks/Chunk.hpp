@@ -1,12 +1,28 @@
 #pragma once
 
-#include "../core/Constants.hpp"
+#include "../../core/Constants.hpp"
 
 #include <glm/glm.hpp>
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <vector>
+
+// --- Hash functor for glm::ivec3 ---
+// Required to index chunks by position in an unordered_map
+struct IVec3Hash
+{
+    std::size_t operator()(const glm::ivec3 &v) const
+    {
+        // Convert each component to a large hash value
+        std::size_t h1 = std::hash<int>{}(v.x);
+        std::size_t h2 = std::hash<int>{}(v.y);
+        std::size_t h3 = std::hash<int>{}(v.z);
+        // Combine with XOR and bit shifts to reduce collisions
+        return h1 ^ (h2 << 16) ^ (h3 << 32);
+    }
+};
 
 class Chunk
 {
