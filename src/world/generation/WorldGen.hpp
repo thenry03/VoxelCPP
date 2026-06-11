@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Chunk.hpp"
+#include "../chunks/Chunk.hpp"
 
 #include <glm/glm.hpp>
 

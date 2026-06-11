@@ -10,9 +10,9 @@
 #include "renderer/Texture.hpp"
 #include "scene/actors/Sun.hpp"
 #include "scene/systems/ChunkMeshingSystem.hpp"
-#include "world/Block.hpp"
-#include "world/Chunk.hpp"
-#include "world/ChunkManager.hpp"
+#include "world/blocks/Block.hpp"
+#include "world/chunks/Chunk.hpp"
+#include "world/chunks/ChunkManager.hpp"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>

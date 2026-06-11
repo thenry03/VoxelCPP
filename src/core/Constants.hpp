@@ -73,6 +73,10 @@ namespace Config
         // Mean ground level, as a fraction of CHUNK_HEIGHT
         constexpr float TERRAIN_BASE = 0.375f;     // 96 blocks
         constexpr float SEA_LEVEL_FACTOR = 0.350f; // ~90 blocks
+        // Tree band: density fades from the start height up to the tree line,
+        // above which peaks are bare rock (~2000 m scaled to a 256-block world)
+        constexpr float TREE_DENSITY_FADE_START_FACTOR = 0.293f; // ~75 blocks
+        constexpr float TREE_LINE_FACTOR = 0.488f;               // ~125 blocks
 
         // Plains: broad, gentle rolls with little relief
         constexpr float PLAINS_NOISE_FREQUENCY = 0.010f;
