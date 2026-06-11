@@ -6,8 +6,10 @@
 #include "renderer/ChunkMesher.hpp"
 #include "renderer/ChunkRenderer.hpp"
 #include "renderer/Shader.hpp"
+#include "renderer/SunRenderer.hpp"
 #include "renderer/Texture.hpp"
-#include "scene/ChunkMeshingSystem.hpp"
+#include "scene/actors/Sun.hpp"
+#include "scene/systems/ChunkMeshingSystem.hpp"
 #include "world/Block.hpp"
 #include "world/Chunk.hpp"
 #include "world/ChunkManager.hpp"
@@ -111,6 +113,10 @@ int main()
                          static_cast<int>(Config::World::CHUNK_HEIGHT),
                          static_cast<int>(Config::World::CHUNK_DEPTH));
 
+    // Create Sun and its renderer
+    Sun sun;
+    SunRenderer sunRenderer;
+
     // GAME LOOP
     while (!window.shouldClose())
     {
@@ -173,6 +179,17 @@ int main()
             shader.setMat4("model", model);
             renderer->draw();
         }
+
+        // Draw Sun
+        // Treat its position as a sky direction anchored to the camera, so it
+        // keeps its apparent place and always sits inside the far plane
+        glm::vec3 sunDirection = glm::normalize(sun.getSunPosition());
+        glm::vec3 sunWorldPosition = camera.getPlayerPosition() + sunDirection * 1500.0f;
+        sunRenderer.draw(sunWorldPosition,
+                         sun.getSunColor(),
+                         sun.getSunSize(),
+                         view,
+                         projection);
 
         // Prevent flickering
         window.swapBuffers();
