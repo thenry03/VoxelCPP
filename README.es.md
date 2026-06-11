@@ -5,16 +5,14 @@
 ![Licencia: MIT](https://img.shields.io/badge/Licencia-MIT-green.svg)
 ![Lenguaje: C++17](https://img.shields.io/badge/Lenguaje-C%2B%2B17-blue.svg)
 ![OpenGL 3.3](https://img.shields.io/badge/OpenGL-3.3_Core_Profile-red.svg)
-![Versión](https://img.shields.io/badge/Versión-v0.2.0-orange.svg)
-![Estado](https://img.shields.io/badge/Estado-Fase_2_Completada-brightgreen.svg)
+![Versión](https://img.shields.io/badge/Versión-v0.3.0-orange.svg)
+![Estado](https://img.shields.io/badge/Estado-Fase_3_Completada-brightgreen.svg)
 
 > [English version](README.md)
 
 ---
 
-![Vista general del terreno](docs/screenshots/terrain_01.png)
-
-*Captura a actualizar tras la Fase 3.*
+<img width="2560" height="1600" alt="release_screenshot_3" src="https://github.com/user-attachments/assets/facb2c4c-1e41-4030-94a4-5e7c3958ed03" />
 
 ---
 
@@ -36,9 +34,14 @@ El motor incluye las siguientes características:
 
 - **Pipeline gráfico:** Implementación completa utilizando la API OpenGL 3.3 Core Profile.
 - **Sistema de cámara:** Cámara FPS con soporte de captura de cursor.
-- **Terreno:** Generación procedural basada en ruido coherente (FBm + OpenSimplex2).
+- **Mundo infinito:** Carga y descarga dinámica de chunks basada en la posición del jugador y una distancia de renderizado configurable.
+- **Generación de terreno:** Generación procedural con domain warping, mapa de continentalidad, llanuras, montañas, playas, ríos y nivel del mar.
+- **Flora:** Generación determinista de árboles a través de los límites de chunk mediante un sistema de hash por celdas.
+- **Pipeline multihilo:** La generación de chunks y la construcción de mallas se ejecutan en hilos de trabajo dedicados, dejando el hilo principal libre para el renderizado.
 - **Gestión de chunks:** Layout de datos SoA (Structure of Arrays) con comprobación estricta de límites.
 - **Optimización:** Face culling entre chunks adyacentes.
+- **Sombreado por cara:** Iluminación por normal de cara para dar profundidad visual sin un sistema de iluminación completo.
+- **Sol visual:** Quad billboard que siempre mira hacia la cámara, renderizado en una posición fija del mundo.
 - **Texturizado:** Atlas de texturas con cálculo de coordenadas UV por tipo de bloque.
 - **Escena:** 14 tipos de bloque distintos con registro extensible basado en IDs.
 - **Arquitectura de memoria:** Gestión de memoria RAII estricta, con encapsulación limpia y separación estricta de responsabilidades.
@@ -114,10 +117,10 @@ La siguiente tabla resume las fases de desarrollo, el progreso actual y los hito
 |------|--------|-------------|
 | Fase 0 — Configuración del entorno | ✅ | Configuración de GLFW + GLAD, sistema de build e inicialización de ventana. |
 | Fase 1 — Pipeline base | ✅ | Ventana, compilación de shaders, cámara, input y delta timer. |
-| Fase 2 — Núcleo del motor de vóxeles | ✅ | Sistema de chunks, mesher con culling, generación procedural de mundo, Atlas de texturas. |
-| Fase 3 — Mecánicas de juego principales | 🚧 | Extensión de altura de chunk, carga/descarga dinámica de chunks, generación de mundo infinita, entorno básico: montañas y árboles. |
+| Fase 2 — Núcleo del motor de vóxeles | ✅ | Sistema de chunks, mesher con culling, generación procedural de mundo, atlas de texturas. |
+| Fase 3 — Mecánicas de juego principales | ✅ | Mundo infinito, generación procedural avanzada con domain warping, ríos y playas, árboles deterministas, sombreado por cara, sol visual, pipeline multihilo. |
 | Fase 4 — Iluminación y entorno | ⬜ | Iluminación flood-fill, niebla y distancia de renderizado, agua, biomas: Bosque, Playas, Desierto, Montañas, Montañas de granito. |
-| Fase 5 — Optimización | ⬜ | Bit-packing, compresión por paleta, multi-threading. |
+| Fase 5 — Optimización | ⬜ | Empaquetado de bits, compresión por paleta, renderizado diferido. |
 
 ---
 
@@ -137,6 +140,12 @@ La siguiente tabla resume las fases de desarrollo, el progreso actual y los hito
 - [GLFW](https://www.glfw.org) — Librería multiplataforma de ventana e input.
 - [GLAD](https://glad.dav1d.de) — Generador de cargador de funciones OpenGL.
 - [GLM](https://glm.g-truc.net) — Librería matemática para software gráfico basada en las especificaciones de GLSL.
+
+---
+
+## Estado de la documentación
+
+El documento de arquitectura (`docs/architecture.pdf`) cubre el diseño de la Fase 2. Se actualizará para reflejar los sistemas de la Fase 3 — pipeline multihilo, mundo infinito, TerrainShaper y flora — en una revisión futura.
 
 ---
 
