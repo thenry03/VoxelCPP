@@ -14,7 +14,7 @@ struct Face
     std::array<glm::vec3, 4> offsets; // Offsets for each face in CCW order
     std::array<glm::vec2, 4> uvs;     // UV base coords [0, 1]
     glm::vec3 normal;                 // Normal vector
-    glm::ivec3 neighbourOffset;       // The neighbor's offset matches the integer normal
+    glm::ivec3 neighbourOffset;       // The neighbour's offset matches the integer normal
 };
 
 // ==========================================
@@ -152,7 +152,7 @@ ChunkMesh ChunkMesher::generateDumbMesh(const Chunk &chunk)
     return dumbMesh;
 }
 
-// Face culling (draws)
+// Culled mesh: emits a face only when its neighbour leaves it visible
 ChunkMesh ChunkMesher::generateCulledMesh(const ChunkNeighbourhood &neighbourhood)
 {
     ChunkMesh culledMesh;
@@ -166,7 +166,7 @@ ChunkMesh ChunkMesher::generateCulledMesh(const ChunkNeighbourhood &neighbourhoo
                     continue;
                 for (const Face &face : cubeFaces)
                 {
-                    // CHANGE: check neighbouring face
+                    // Look at the block sitting against this face
                     // Position + offset
                     int nx = x + face.neighbourOffset.x;
                     int ny = y + face.neighbourOffset.y;
@@ -212,11 +212,11 @@ ChunkMesh ChunkMesher::generateCulledMesh(const ChunkNeighbourhood &neighbourhoo
                         // Block is in the same chunk
                         neighbourID = neighbourhood.center.getBlock(nx, ny, nz);
 
-                    // If the neighbouring face is solid:
-                    // - This face cannot be seen
-                    // - There is no point in drawing it
-                    // - So skip it!
-                    if (BlockDatabase::get(neighbourID).isSolid)
+                    // Hide this face if the neighbour fully occludes it:
+                    // - An opaque block
+                    // - The same transparent type, so internal faces of a
+                    //   volume collapse (water + water, leaves + leaves)
+                    if (neighbourID == blockID || !BlockDatabase::get(neighbourID).isTransparent)
                         continue;
 
                     // If the neighbouring face is transparent;
@@ -245,7 +245,7 @@ ChunkMesh ChunkMesher::generateCulledMesh(const ChunkNeighbourhood &neighbourhoo
 
                     // If normal is +Y, it is the top face
                     // If normal is -Y, it is the bottom face
-                    // Anything else is a side face trated equally
+                    // Anything else is a side face treated equally
                     if (face.normal.y > 0.0f)
                         textureID = textureLayout.top;
                     else if (face.normal.y < 0.0f)
