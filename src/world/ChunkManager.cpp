@@ -303,7 +303,7 @@ void ChunkManager::workerLoop()
 
         // Step 2
         // Chunk generation
-        Chunk newChunk = WorldGen::generateChunk(chunkPosition, WorldGen::GenerationType::Simplex2D);
+        Chunk newChunk = WorldGen::generateChunk(chunkPosition, WorldGen::GenerationType::BLENDED_2D_NOISE);
 
         // Step 3
         {
