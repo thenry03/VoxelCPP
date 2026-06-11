@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/Constants.hpp"
+#include "../../core/Constants.hpp"
 
 #include <glm/glm.hpp>
 

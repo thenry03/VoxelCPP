@@ -1,5 +1,5 @@
 #include "ChunkManager.hpp"
-#include "WorldGen.hpp"
+#include "../generation/WorldGen.hpp"
 
 #include <array>
 #include <cmath>
