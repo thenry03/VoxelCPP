@@ -1,9 +1,10 @@
 #pragma once
 
 #include "Constants.hpp"
-#include "Input.hpp"
 
 #include <glm/glm.hpp>
+
+class Input;
 
 class Camera
 {

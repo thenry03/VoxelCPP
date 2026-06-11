@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../world/Chunk.hpp"
-#include "../world/ChunkNeighbourhood.hpp"
+#include "../world/chunks/Chunk.hpp"
+#include "../world/chunks/ChunkNeighbourhood.hpp"
 #include "Vertex.hpp"
 
 #include <vector>

@@ -1,5 +1,5 @@
 #include "ChunkMesher.hpp"
-#include "../world/Block.hpp"
+#include "../world/blocks/Block.hpp"
 #include "BlockTextureMap.hpp"
 
 #include <array>
